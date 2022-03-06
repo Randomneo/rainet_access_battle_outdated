@@ -1,0 +1,9 @@
+asyncpg>=0.22,<0.23
+bcrypt~=3.2.0
+coverage>=5.3,<5.4
+psycopg2>=2.8.6,<2.9
+pyconfiger>=0.1.0,<0.2
+django==3.2
+djangorestframework==3.13
+markdown==3.3
+django-filter==21.1
