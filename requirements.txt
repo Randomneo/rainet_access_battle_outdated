@@ -7,3 +7,4 @@ django==3.2
 djangorestframework==3.13
 markdown==3.3
 django-filter==21.1
+djangorestframework-simplejwt==5.1.0
