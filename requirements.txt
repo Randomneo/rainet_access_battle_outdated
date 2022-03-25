@@ -9,4 +9,5 @@ markdown==3.3
 psycopg2>=2.8.6,<2.9
 pyconfiger>=0.1.0,<0.2
 pytest~=7.0
+pytest-cov~=3.0.0
 pytest-django~=4.5.2
