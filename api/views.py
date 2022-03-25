@@ -3,6 +3,7 @@ from rest_framework.generics import CreateAPIView
 from rest_framework.generics import RetrieveAPIView
 from rest_framework.permissions import AllowAny
 
+from .serializers import CreateGameSerializer
 from .serializers import ProfileSerializer
 from .serializers import UserSerializer
 
@@ -21,3 +22,7 @@ class SignupView(CreateAPIView):
     queryset = User.objects.all()
 
     permission_classes = [AllowAny]
+
+
+class CreateGameView(CreateAPIView):
+    serializer_class = CreateGameSerializer
