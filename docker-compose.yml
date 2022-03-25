@@ -19,13 +19,21 @@ services:
     environment:
       <<: *db-envs
       DB_HOST: ${DB_HOST:-db}
+    depends_on:
+      - db
 
   db:
     image: postgres:13-alpine
     environment:
       <<: *db-envs
+    volumes:
+      - db_volume:/var/lib/postgresql/data
 
   adminer:
     image: adminer
     ports:
       - 8080:8080
+
+
+volumes:
+  db_volume:
