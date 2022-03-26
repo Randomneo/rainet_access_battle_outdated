@@ -6,4 +6,4 @@ const app_id = createApp(App)
 
 app_id.use(router)
 
-app_id.mount('#app_id')
+app_id.mount('#app')

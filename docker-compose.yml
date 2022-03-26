@@ -22,6 +22,14 @@ services:
     depends_on:
       - db
 
+  frontend:
+    build: ./frontend
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend:/opt/project
+    command: "npm run dev"
+
   db:
     image: postgres:13-alpine
     environment:
