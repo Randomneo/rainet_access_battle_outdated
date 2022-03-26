@@ -1,5 +1,6 @@
 asyncpg>=0.22,<0.23
 bcrypt~=3.2.0
+channels~=3.0.4
 coverage>=5.3,<5.4
 django==3.2
 django-filter==21.1

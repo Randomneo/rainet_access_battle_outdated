@@ -10,11 +10,11 @@ x-db-envs: &db-envs
 services:
   # TODO: add nginx:
   backend:
-    build: .
+    build: ./backend
     ports:
       - "8000:${BE_INNER_UVICORN_PORT:-8080}"
     volumes:
-      - .:/opt/project
+      - ./backend:/opt/project
     command: "python manage.py runserver 0.0.0.0:${BE_INNER_UVICORN_PORT:-8080}"
     environment:
       <<: *db-envs

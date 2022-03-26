@@ -1,5 +1,5 @@
-* login
-* signup
-* create game
+* DONE login
+* DONE signup
+* DONE create game
+* IN_PROGRES websocket
 * join game
-* websocket
