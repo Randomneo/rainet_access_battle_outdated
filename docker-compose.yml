@@ -8,7 +8,6 @@ x-db-envs: &db-envs
   POSTGRES_PORT: ${POSTGRES_PORT:-5432}
 
 services:
-  # TODO: add nginx:
   backend:
     build: ./backend
     ports:
@@ -21,14 +20,6 @@ services:
       DB_HOST: ${DB_HOST:-db}
     depends_on:
       - db
-
-  frontend:
-    build: ./frontend
-    ports:
-      - "3000:3000"
-    volumes:
-      - ./frontend:/opt/project
-    command: "npm run dev"
 
   db:
     image: postgres:13-alpine
