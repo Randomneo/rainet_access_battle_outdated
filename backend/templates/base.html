@@ -1,0 +1,37 @@
+{% load bootstrap5 %}
+<html>
+    <head>
+        {% bootstrap_css %}
+        {% bootstrap_javascript %}
+    </head>
+    <body>
+        <header class="">
+            <ul class="nav col-12 col-md-auto mb-2">
+                <div class="me-auto">
+                    <li>
+                        <a class="nav-link px2" href="{% url 'home' %}">RainetAccessBattle</a>
+                    </li>
+                </div>
+                {% if user.is_authenticated %}
+                    <li>
+                        <a class="nav-link px2" href="{% url 'logout' %}">Logout</a>
+                    </li>
+                {% else %}
+                    <li>
+                        <a class="nav-link px2" href="{% url 'login' %}">Login</a>
+                    </li>
+                    <li>
+                        <a class="nav-link px2" href="">Sign-up (WIP)</a>
+                    </li>
+                {% endif %}
+            </ul>
+        </header>
+        <main>
+            {% bootstrap_messages %}
+            {% block content %}
+            {% endblock %}
+        </main>
+        {% block extra_scripts %}
+        {% endblock %}
+    </body>
+</html>
