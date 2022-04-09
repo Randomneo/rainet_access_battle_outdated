@@ -1,89 +1,63 @@
-import Camera from './camera.js';
-import Vec2 from './vec.js';
+import { Vec2 } from './vec.js';
+import { Board } from './board.js';
+import { Events } from './event.js';
+import { Scene } from './scene.js';
+import {
+    VirusButton,
+    LinkButton,
+    StartButton,
+} from './button.js';
 
-
-let gameObjects = [];
-
-class BaseGameObject {
-    draw(context) {
-        console.log('implement draw');
-    }
-}
-
-class GameObject extends BaseGameObject {
-    constructor(pos, size, fillStyle) {
-        super();
-        this.pos = pos;
-        this.size = size;
-        this.fillStyle = fillStyle;
-    }
-
-    draw(context) {
-        context.fillStyle = this.fillStyle;
-        context.fillRect(
-            Camera.getPos(this.pos).x,
-            Camera.getPos(this.pos).y,
-            this.pos.x + this.size.x,
-            this.pos.y + this.size.y,
-        );
-    }
-}
-
-class Board extends BaseGameObject {
-    constructor(size, fillStyle) {
-        super();
-        this.lineWidth = 6;
-        this.rectSize = new Vec2(100, 100);
-        this.size = size;
-        this.fillStyle = fillStyle;
-    }
-    draw(context) {
-        context.fillStyle = this.fillStyle;
-        for (let i = 0; i <= this.size.x; i+=this.rectSize.x) {
-            context.fillRect(
-                Camera.getX(i - this.lineWidth / 2),
-                Camera.getY(- this.lineWidth / 2),
-                this.lineWidth,
-                this.size.y + this.lineWidth,
-            );
-        }
-        for (let i = 0; i <= this.size.x; i+=this.rectSize.x) {
-            context.fillRect(
-                Camera.getX(- this.lineWidth / 2),
-                Camera.getY(i - this.lineWidth / 2),
-                this.size.x + this.lineWidth,
-                this.lineWidth,
-            );
-        }
-    }
-}
-
-
-function draw(context, gameObjects) {
-    console.log(gameObjects);
-
-    gameObjects.forEach(function(gameObject) {
-        gameObject.draw(context);
-    });
-}
 
 
 class Game {
     constructor() {
-        this.mapSize = new Vec2(800, 800);
+        let self = this;
+        this.mapSize = new Vec2(400, 400);
         this.canvas = document.querySelector('#gamecanvas');
         this.context = this.canvas.getContext('2d');
-        this.canvas.width = this.mapSize.x + Camera.offset * 2;
-        this.canvas.height = this.mapSize.y + Camera.offset * 2;
+        this.canvas.width = 900;
+        this.canvas.height = 600;
 
         // load level
-        let gameObject = new GameObject(new Vec2(50, 50), new Vec2(50, 50), '#f00');
-        let bord = new Board(this.mapSize, '#000');
-        gameObjects.push(gameObject);
-        gameObjects.push(bord);
+        let board = new Board(new Vec2(20, 150), this.mapSize.copy());
+        Scene.gameObjects.push(board);
+        this.planStage();
+        Events.handlers('game.start').set('start', function () { self.gameStage(); });
 
-        // first draw
-        draw(this.context, gameObjects);
+        this.canvas.onmousemove = function (event) {
+            Events.trigger('canvas.mousemove', {'this': this, 'event': event});
+        };
+        this.canvas.onmouseout = function (event) {
+            Events.trigger('canvas.mouseout');
+        };
+        this.canvas.onclick = function (event) {
+            Events.trigger('canvas.click', {'this': this, 'event': event});
+        };
+
+        setInterval(function () { self.draw(); }, 10);
+    }
+
+    planStage() {
+        Scene.namedObjects['virus_button'] = new VirusButton(new Vec2(500, 200), new Vec2(100, 50));
+        Scene.namedObjects['link_button'] = new LinkButton(new Vec2(700, 200), new Vec2(100, 50));
+        Scene.namedObjects['start_button'] = new StartButton(new Vec2(550, 500), new Vec2(200, 70));
+    }
+
+    cleanPlanStage() {
+        delete Scene.namedObjects['virus_button'];
+        delete Scene.namedObjects['link_button'];
+        delete Scene.namedObjects['start_button'];
+    }
+
+    gameStage() {
+        this.cleanPlanStage();
+
+    }
+
+    draw() {
+        this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        Scene.draw(this.context);
     }
 
     static start() {

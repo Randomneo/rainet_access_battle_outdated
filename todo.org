@@ -1,5 +1,10 @@
-* DONE login
-* DONE signup
-* DONE create game
-* IN_PROGRES websocket
-* join game
+* backend
+** DONE login
+** DONE signup
+** DONE create game
+** IN_PROGRES websocket
+** join game
+
+* frontend game
+** IN_PROGRES build arch
+** create tickets

@@ -1,7 +1,7 @@
 import Vec2 from './vec.js';
 
 class Camera {
-    static offset = 4;
+    static offset = 0;
 
     static getPos(pos) {
         return new Vec2(pos.x + this.offset, pos.y + this.offset);
