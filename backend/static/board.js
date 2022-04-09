@@ -1,4 +1,4 @@
-import { BaseGameObject, Virus, Link } from './GameObject.js';
+import { BaseGameObject, Virus, Link, Exit } from './GameObject.js';
 import { Events, getMousePos } from './event.js';
 import { Vec2 } from './vec.js';
 import Camera from './camera.js';
@@ -16,7 +16,6 @@ export class Board extends BaseGameObject {
         this.fillStyle = '#000';
         this.setsize(size);
         this.card = null;
-        console.log(this.rectSize);
         this.handle_click = true;
 
 
@@ -45,14 +44,26 @@ export class Board extends BaseGameObject {
             }
         });
         Events.handlers('board.system.start').set('check_start', function () {self.checkBeforeStart();});
+        Events.trigger('board.prepare', self);
+
 
         // Clear before game
         Events.handlers('game.start').set('board_before_start', function () {
             self.cursor = null;
             self.card = null;
+            self.enemy_turn = false;
             Events.handlers('board.setcard').delete('set_card');
             Events.handlers('canvas.mousemove').delete('show_board_cursor');
             Events.handlers('board.system.start').delete('check_start');
+            Events.handlers('canvas.mousemove').set('move_card', function (data) {
+                if (!self.card)
+                    return;
+                self.card.pos = getMousePos(data.this, data.event);
+                self.card.pos.x -= 25;
+                self.card.pos.y -= 25;
+            });
+            self.canvasClick(function (arg) {self.in_game_clicked(arg);});
+            Events.trigger('board.start', self);
         });
 
     }
@@ -73,6 +84,37 @@ export class Board extends BaseGameObject {
         self.card = card;
     }
 
+    in_game_clicked(mouse_pos) {
+        let board_pos = this.toBoard(mouse_pos);
+        if (!this.card) {
+            if (
+                this.enemy_turn
+                    || !this.board[board_pos.x][board_pos.y]
+                    || !this.board[board_pos.x][board_pos.y].movable
+            )
+                return;
+            this.card = this.board[board_pos.x][board_pos.y];
+            this.initial_pos = board_pos;
+        } else {
+            if (board_pos.x == this.initial_pos.x && board_pos.y == this.initial_pos.y) {
+                this.card.pos = this.toGlobal(board_pos);
+                this.board[board_pos.x][board_pos.y] = this.card;
+                this.card = null;
+                return;
+            }
+            if (
+                Math.abs(this.initial_pos.x - board_pos.x) + Math.abs(this.initial_pos.y - board_pos.y) > 1
+                    || this.board[board_pos.x][board_pos.y]
+            )
+                return;
+
+            this.card.pos = this.toGlobal(board_pos);
+            this.board[this.initial_pos.x][this.initial_pos.y] = null;
+            this.board[board_pos.x][board_pos.y] = this.card;
+            this.card = null;
+        }
+    }
+
     clicked(mouse_pos) {
         if (!this.card) {
             return;
@@ -81,7 +123,8 @@ export class Board extends BaseGameObject {
     }
 
     cards() {
-        return this.board.reduce((acc, val) => acc.concat(val), []).filter(x => x);
+        let cards = this.board.reduce((acc, val) => acc.concat(val), []).filter(x => x);
+        return cards;
     }
 
     viruses() {
@@ -153,7 +196,8 @@ export class Board extends BaseGameObject {
 
         let board_pos = this.toBoard(pos);
 
-
+        if (this.board[board_pos.x][board_pos.y] instanceof Exit)
+            return;
         if (
             this.isFieldAllowed(gameobject, board_pos)
                 && this.isLimitAllowed(gameobject)
