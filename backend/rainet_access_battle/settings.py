@@ -28,7 +28,11 @@ SECRET_KEY = 'django-insecure-*g4h7j%a-^x^q2-_8=j2j5bpwz@z7^(m-fwtlg3xs^(%8+nv@t
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+    'localhost',
+    'localhost:8000',
+    'randomneo.dev',
+]
 
 
 # Application definition
