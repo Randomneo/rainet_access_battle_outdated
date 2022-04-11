@@ -13,3 +13,4 @@ pyconfiger>=0.1.0,<0.2
 pytest~=7.0
 pytest-cov~=3.0.0
 pytest-django~=4.5.2
+uwsgi~=2.0.20

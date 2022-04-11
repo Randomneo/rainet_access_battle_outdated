@@ -14,8 +14,7 @@ services:
       - "8000:${BE_INNER_UVICORN_PORT:-8080}"
     volumes:
       - ./backend:/opt/project
-    command: "python manage.py runserver 0.0.0.0:${BE_INNER_UVICORN_PORT:-8080}"
-    # command: "uwsgi --ini uwsgi.ini"
+    command: "uwsgi --ini uwsgi.ini"
     environment:
       <<: *db-envs
       DB_HOST: ${DB_HOST:-db}
