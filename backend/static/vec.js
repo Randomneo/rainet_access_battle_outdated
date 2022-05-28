@@ -12,10 +12,10 @@ export class Vec2 {
     }
 
     inRect(x1, y1, x2, y2) {
-        return this.pos.x > x1
-            && this.pos.x < x2
-            && this.pos.y > y1
-            && this.pos.y < y2;
+        return this.x > x1
+            && this.x < x2
+            && this.y > y1
+            && this.y < y2;
     }
 }
 

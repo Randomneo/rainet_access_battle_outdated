@@ -1,8 +1,15 @@
-import { BaseGameObject, Virus, Link, Exit } from './GameObject.js';
+import {
+    BaseGameObject,
+    Virus,
+    Link,
+    Enemy,
+    Exit,
+} from './GameObject.js';
 import { Events, getMousePos } from './event.js';
 import { Vec2 } from './vec.js';
 import Camera from './camera.js';
 import { Scene } from './scene.js';
+import { mouse } from './mouse.js';
 
 
 
@@ -15,7 +22,6 @@ export class Board extends BaseGameObject {
         this.lineWidth = 1;
         this.fillStyle = '#000';
         this.setsize(size);
-        this.card = null;
         this.handle_click = true;
 
 
@@ -27,34 +33,22 @@ export class Board extends BaseGameObject {
             }
         }
         // prepare stage events
-        Events.handlers('board.setcard').set('set_card', function (card) { self.setCard(self, card); });
-        Events.handlers('canvas.mousemove').set('show_board_cursor', function (data) {
-            if (!self.card)
-                return;
-            self.cursor = self.card.copy();
-            self.cursor.z = -1;
-            Scene.namedObjects['cursor'] = self.cursor;
-
-            let board_pos = self.toBoard(getMousePos(data.this, data.event));
-            if (Board.isPosOn(board_pos)) {
-                self.cursor.visible = true;
-                self.cursor.pos = self.toGlobal(board_pos);
-            } else {
-                self.cursor.visible = false;
-            }
+        Events.handlers('board.setcard').set('set_card', function (card) {
+            mouse.setCursor(card);
         });
-        Events.handlers('board.system.start').set('check_start', function () {self.checkBeforeStart();});
+        Events.handlers('canvas.mousemove').set('show_board_cursor', function (data) {
+            Events.trigger('board.mousemove', {board: self, mouse_pos: getMousePos(data.this, data.event)});
+        });
+        Events.handlers('board.check_start').set('check_start', function () {self.checkBeforeStart();});
         Events.trigger('board.prepare', self);
 
 
         // Clear before game
         Events.handlers('game.start').set('board_before_start', function () {
-            self.cursor = null;
-            self.card = null;
             self.enemy_turn = false;
             Events.handlers('board.setcard').delete('set_card');
             Events.handlers('canvas.mousemove').delete('show_board_cursor');
-            Events.handlers('board.system.start').delete('check_start');
+            Events.handlers('board.start').delete('check_start');
 
             Events.handlers('canvas.mousemove').set('move_card', function (data) {
                 if (!self.card)
@@ -65,6 +59,17 @@ export class Board extends BaseGameObject {
             });
             self.canvasClick(function (arg) {self.in_game_clicked(arg);});
             Events.trigger('board.start', self);
+        });
+        Events.handlers('board.start').set('spawn_enemies', function () {
+            let enemy_poses = [
+                [0, 0], [1, 0], [2, 0], [3, 1], [4, 1], [5, 0], [6, 0], [7, 0],
+            ];
+            for (let pos of enemy_poses) {
+                pos = new Vec2(pos[0], pos[1]);
+                let enemy = new Enemy();
+                enemy.pos = self.toGlobal(pos);
+                self.board[pos.x][pos.y] = enemy;
+            }
         });
 
     }
@@ -80,10 +85,6 @@ export class Board extends BaseGameObject {
     setsize(size) {
         this.size = size;
         this.rectSize = new Vec2(this.size.x/8, this.size.y/8);
-    }
-
-    setCard(self, card) {
-        self.card = card;
     }
 
     in_game_clicked(mouse_pos) {
@@ -117,10 +118,10 @@ export class Board extends BaseGameObject {
     }
 
     clicked(mouse_pos) {
-        if (!this.card) {
+        if (!mouse.cursor) {
             return;
         }
-        this.add(this.card.copy(), mouse_pos);
+        this.add(mouse.cursor.copy(), mouse_pos);
     }
 
     cards() {
@@ -137,9 +138,7 @@ export class Board extends BaseGameObject {
     }
 
     child_draw() {
-        let childs = this.cards();
-        childs.push(this.card);
-        return childs;
+        return this.cards();
     }
 
     draw(context) {
@@ -163,17 +162,13 @@ export class Board extends BaseGameObject {
         }
     }
 
-    static isPosOn(pos) {
-        return pos.inRect(-1, -1, 8, 8);
-    }
-
     isFieldAllowed(gameobject, board_pos) {
         return this.board[board_pos.x][board_pos.y] === null
             || this.board[board_pos.x][board_pos.y].constructor !== gameobject.constructor;
     }
     isLimitAllowed(gameobject) {
-        return (this.card.constructor === Virus && this.viruses().length < 4)
-            || (this.card.constructor === Link && this.links().length < 4);
+        return (mouse.cursor.constructor === Virus && this.viruses().length < 4)
+            || (mouse.cursor.constructor === Link && this.links().length < 4);
     }
     isPosAllowed(board_pos) {
         let allowed_poses = [
@@ -199,7 +194,7 @@ export class Board extends BaseGameObject {
             return;
         if (
             this.isFieldAllowed(gameobject, board_pos)
-                && this.isLimitAllowed(gameobject)
+                && this.isLimitAllowed()
                 && this.isPosAllowed(board_pos)
         ) {
             this.board[board_pos.x][board_pos.y] = gameobject;

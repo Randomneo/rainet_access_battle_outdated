@@ -10,8 +10,8 @@ import {
 import {
     OwnExit,
     EnemyExit,
-    Enemy,
 } from './GameObject.js';
+import { mouse } from './mouse.js';
 
 
 let startButtons = {
@@ -46,6 +46,7 @@ class Game {
         this.planStage();
         let board = new Board(new Vec2(20, 150), this.mapSize.copy());
         Scene.gameObjects.push(board);
+        Scene.gameObjects.push(mouse);
         Events.handlers('game.start').set('start', function () { self.gameStage(); });
 
         this.canvas.onmousemove = function (event) {
@@ -83,17 +84,6 @@ class Game {
         OwnExit.create_default_at(OwnExit, [new Vec2(3, 7), new Vec2(4, 7)]);
         EnemyExit.create_default_at(EnemyExit, [new Vec2(3, 0), new Vec2(4, 0)]);
 
-        Events.handlers('board.start').set('spawn_enemies', function (board) {
-            let enemy_poses = [
-                [0, 0], [1, 0], [2, 0], [3, 1], [4, 1], [5, 0], [6, 0], [7, 0],
-            ];
-            for (let pos of enemy_poses) {
-                pos = new Vec2(pos[0], pos[1]);
-                let enemy = new Enemy();
-                enemy.pos = board.toGlobal(pos);
-                board.board[pos.x][pos.y] = enemy;
-            }
-        });
     }
 
     cleanPlanStage() {

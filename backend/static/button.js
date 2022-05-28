@@ -111,7 +111,7 @@ export class StartButton extends Button {
     }
 
     clicked() {
-        Events.trigger('board.system.start');
+        Events.trigger('board.check_start');
     }
 
     draw(context) {
