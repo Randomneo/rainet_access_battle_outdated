@@ -1,8 +1,12 @@
 {% load bootstrap5 %}
+{% load static %}
 <html>
     <head>
         {% bootstrap_css %}
         {% bootstrap_javascript %}
+        <link rel="{% static 'style.css' %}">
+        {% block extra_css %}
+        {% endblock %}
     </head>
     <body>
         <header class="">

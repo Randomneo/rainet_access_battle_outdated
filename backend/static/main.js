@@ -14,6 +14,24 @@ import {
 } from './GameObject.js';
 
 
+let startButtons = {
+    virus: {
+        pos: [500, 200],
+        size: [100, 50],
+        type: VirusButton,
+    },
+    link: {
+        pos: [700, 200],
+        size: [100, 50],
+        type: LinkButton,
+    },
+    start: {
+        pos: [550, 500],
+        size: [200, 70],
+        type: StartButton,
+    },
+};
+
 
 class Game {
     constructor() {
@@ -43,10 +61,25 @@ class Game {
         setInterval(function () { self.draw(); }, 10);
     }
 
+    loadStartButtons() {
+        for (const i in startButtons) {
+            let button = startButtons[i];
+            Scene.namedObjects[i+'_button'] = new button.type(
+                new Vec2(button.pos[0], button.pos[1]),
+                new Vec2(button.size[0], button.size[1]),
+            );
+        }
+    }
+
+    clearStartButtons() {
+        for (const i in startButtons) {
+            delete Scene.namedObjects[i+'_button'];
+        }
+    }
+
     planStage() {
-        Scene.namedObjects['virus_button'] = new VirusButton(new Vec2(500, 200), new Vec2(100, 50));
-        Scene.namedObjects['link_button'] = new LinkButton(new Vec2(700, 200), new Vec2(100, 50));
-        Scene.namedObjects['start_button'] = new StartButton(new Vec2(550, 500), new Vec2(200, 70));
+        this.loadStartButtons();
+
         OwnExit.create_default_at(OwnExit, [new Vec2(3, 7), new Vec2(4, 7)]);
         EnemyExit.create_default_at(EnemyExit, [new Vec2(3, 0), new Vec2(4, 0)]);
 
@@ -64,9 +97,7 @@ class Game {
     }
 
     cleanPlanStage() {
-        delete Scene.namedObjects['virus_button'];
-        delete Scene.namedObjects['link_button'];
-        delete Scene.namedObjects['start_button'];
+        this.clearStartButtons();
     }
 
     gameStage() {

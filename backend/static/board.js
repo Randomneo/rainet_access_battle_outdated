@@ -55,6 +55,7 @@ export class Board extends BaseGameObject {
             Events.handlers('board.setcard').delete('set_card');
             Events.handlers('canvas.mousemove').delete('show_board_cursor');
             Events.handlers('board.system.start').delete('check_start');
+
             Events.handlers('canvas.mousemove').set('move_card', function (data) {
                 if (!self.card)
                     return;
@@ -72,6 +73,7 @@ export class Board extends BaseGameObject {
         if (this.viruses().length >= 4 && this.links().length >= 4) {
             Events.trigger('game.start');
         } else {
+            console.log('can\'t start game');
         }
     }
 
@@ -94,22 +96,21 @@ export class Board extends BaseGameObject {
             )
                 return;
             this.card = this.board[board_pos.x][board_pos.y];
-            this.initial_pos = board_pos;
+            this.card.selectToMove(board_pos);
+            this.board[this.card.board_pos.x][this.card.board_pos.y] = null;
         } else {
-            if (board_pos.x == this.initial_pos.x && board_pos.y == this.initial_pos.y) {
-                this.card.pos = this.toGlobal(board_pos);
-                this.board[board_pos.x][board_pos.y] = this.card;
-                this.card = null;
+            if (!this.card.validMove(board_pos)) {
                 return;
             }
-            if (
-                Math.abs(this.initial_pos.x - board_pos.x) + Math.abs(this.initial_pos.y - board_pos.y) > 1
-                    || this.board[board_pos.x][board_pos.y]
-            )
+            if (this.board[board_pos.x][board_pos.y]) {
+                console.log('owerlapping skip');
                 return;
+            }
+            if (!board_pos.eq(this.card.board_pos)) {
+                console.log('player moved');
+            }
 
             this.card.pos = this.toGlobal(board_pos);
-            this.board[this.initial_pos.x][this.initial_pos.y] = null;
             this.board[board_pos.x][board_pos.y] = this.card;
             this.card = null;
         }
@@ -136,13 +137,15 @@ export class Board extends BaseGameObject {
     }
 
     child_draw() {
-        return this.cards();
+        let childs = this.cards();
+        childs.push(this.card);
+        return childs;
     }
 
     draw(context) {
 
         context.fillStyle = this.fillStyle;
-        for (let i = 0; i <= this.size.x; i+=this.rectSize.x) {
+        for (let i = 0; i <= this.size.x; i += this.rectSize.x) {
             context.fillRect(
                 Camera.getX(i + this.pos.x - this.lineWidth / 2),
                 Camera.getY(this.pos.y - this.lineWidth / 2),
@@ -150,7 +153,7 @@ export class Board extends BaseGameObject {
                 this.size.y + this.lineWidth,
             );
         }
-        for (let i = 0; i <= this.size.y; i+=this.rectSize.y) {
+        for (let i = 0; i <= this.size.y; i += this.rectSize.y) {
             context.fillRect(
                 Camera.getX(this.pos.x - this.lineWidth / 2),
                 Camera.getY(i + this.pos.y - this.lineWidth / 2),
@@ -161,10 +164,7 @@ export class Board extends BaseGameObject {
     }
 
     static isPosOn(pos) {
-        return (
-            pos.x < 8 && pos.x >= 0
-            && pos.y < 8 && pos.y >= 0
-        );
+        return pos.inRect(-1, -1, 8, 8);
     }
 
     isFieldAllowed(gameobject, board_pos) {
@@ -188,7 +188,6 @@ export class Board extends BaseGameObject {
         ];
         return allowed_poses.some(e => e[0] === board_pos.x && e[1] === board_pos.y);
     }
-
 
     add(gameobject, pos=null) {
         if (pos === null)

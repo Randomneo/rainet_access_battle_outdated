@@ -73,6 +73,7 @@ class Card extends BaseGameObject {
         this.visible = false;
         this.z = -10;
         this.movable = false;
+        this.board_pos = null;
     }
 
     mousePosToBoard(pos) {
@@ -109,6 +110,18 @@ class Card extends BaseGameObject {
             Object.getPrototypeOf(this),
             Object.getOwnPropertyDescriptors(this)
         );
+    }
+
+    selectToMove(board_pos) {
+        this.board_pos = board_pos;
+    }
+
+    validMove(newPos) {
+        if (!this.board_pos)
+            return false;
+        if (Math.abs(this.board_pos.x - newPos.x) + Math.abs(this.board_pos.y - newPos.y) > 1)
+            return false;
+        return true;
     }
 }
 
