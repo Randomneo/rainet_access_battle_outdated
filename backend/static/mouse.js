@@ -9,7 +9,7 @@ class Mouse extends BaseGameObject {
         this.cursor = null;
         self = this;
 
-        Events.handlers('board.mousemove').set('draw_cursor', function(data) {
+        Events.handlers('board.mousemove').set('mouse_cursor', function(data) {
             let board = data.board;
             if (!mouse.cursor)
                 return;
@@ -21,12 +21,26 @@ class Mouse extends BaseGameObject {
                 self.cursor.visible = false;
             }
         });
+        Events.handlers('mouse.setcard').set('set_card', function (card) {
+            self.setCursor(card);
+            this.cursor.z = -1;
+            self.cursor.visible = false;
+        });
+        Events.handlers('game.start').set('mouse_before_start', function () {
+            self.cursor = null;
+            Events.handlers('mouse.setcard').delete('set_card');
+            Events.handlers('board.mousemove').set('mouse_cursor', function(data) {
+                if (!self.cursor)
+                    return;
+                self.cursor.pos = data.mouse_pos;
+                self.cursor.pos.x -= 25;
+                self.cursor.pos.y -= 25;
+            });
+        });
     }
 
     setCursor(gameObject) {
         this.cursor = gameObject.copy();
-        this.cursor.z = -1;
-        this.cursor.visible = false;
     }
 
     child_draw() {

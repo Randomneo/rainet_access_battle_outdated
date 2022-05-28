@@ -53,7 +53,7 @@ class Game {
             Events.trigger('canvas.mousemove', {'this': this, 'event': event});
         };
         this.canvas.onmouseout = function (event) {
-            Events.trigger('canvas.mouseout');
+            Events.trigger('canvas.mouseout', {'this': this, 'event': event});
         };
         this.canvas.onclick = function (event) {
             Events.trigger('canvas.click', {'this': this, 'event': event});

@@ -68,7 +68,7 @@ class CardSelector extends Button {
         let self = this;
         Events.trigger('cardselector.unselect');
         this.selected = true;
-        Events.trigger('board.setcard', this.cursor.copy());
+        Events.trigger('mouse.setcard', this.cursor.copy());
     }
 
     draw(context) {

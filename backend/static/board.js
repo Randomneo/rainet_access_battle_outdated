@@ -32,34 +32,22 @@ export class Board extends BaseGameObject {
                 this.board[i].push(null);
             }
         }
-        // prepare stage events
-        Events.handlers('board.setcard').set('set_card', function (card) {
-            mouse.setCursor(card);
-        });
-        Events.handlers('canvas.mousemove').set('show_board_cursor', function (data) {
+        // planing stage events
+        Events.handlers('canvas.mousemove').set('mouse', function (data) {
             Events.trigger('board.mousemove', {board: self, mouse_pos: getMousePos(data.this, data.event)});
         });
         Events.handlers('board.check_start').set('check_start', function () {self.checkBeforeStart();});
-        Events.trigger('board.prepare', self);
+        self.clicked = self.prepare_clicked;
 
+        Events.trigger('board.prepare', self);
 
         // Clear before game
         Events.handlers('game.start').set('board_before_start', function () {
-            self.enemy_turn = false;
-            Events.handlers('board.setcard').delete('set_card');
-            Events.handlers('canvas.mousemove').delete('show_board_cursor');
             Events.handlers('board.start').delete('check_start');
-
-            Events.handlers('canvas.mousemove').set('move_card', function (data) {
-                if (!self.card)
-                    return;
-                self.card.pos = getMousePos(data.this, data.event);
-                self.card.pos.x -= 25;
-                self.card.pos.y -= 25;
-            });
-            self.canvasClick(function (arg) {self.in_game_clicked(arg);});
             Events.trigger('board.start', self);
         });
+
+        // main stage prepare board
         Events.handlers('board.start').set('spawn_enemies', function () {
             let enemy_poses = [
                 [0, 0], [1, 0], [2, 0], [3, 1], [4, 1], [5, 0], [6, 0], [7, 0],
@@ -71,7 +59,10 @@ export class Board extends BaseGameObject {
                 self.board[pos.x][pos.y] = enemy;
             }
         });
-
+        Events.handlers('board.start').set('prepare_board', function () {
+            self.clicked = self.in_game_clicked;
+            self.enemy_turn = false;
+        });
     }
 
     checkBeforeStart() {
@@ -89,35 +80,37 @@ export class Board extends BaseGameObject {
 
     in_game_clicked(mouse_pos) {
         let board_pos = this.toBoard(mouse_pos);
-        if (!this.card) {
+        if (!mouse.cursor) {
             if (
                 this.enemy_turn
                     || !this.board[board_pos.x][board_pos.y]
                     || !this.board[board_pos.x][board_pos.y].movable
             )
                 return;
-            this.card = this.board[board_pos.x][board_pos.y];
-            this.card.selectToMove(board_pos);
-            this.board[this.card.board_pos.x][this.card.board_pos.y] = null;
+            mouse.setCursor(this.board[board_pos.x][board_pos.y]);
+            mouse.cursor.z = 1;
+            mouse.cursor.selectToMove(board_pos);
+            this.board[mouse.cursor.board_pos.x][mouse.cursor.board_pos.y] = null;
         } else {
-            if (!this.card.validMove(board_pos)) {
+            if (!mouse.cursor.validMove(board_pos)) {
                 return;
             }
             if (this.board[board_pos.x][board_pos.y]) {
                 console.log('owerlapping skip');
                 return;
             }
-            if (!board_pos.eq(this.card.board_pos)) {
+            if (!board_pos.eq(mouse.cursor.board_pos)) {
                 console.log('player moved');
             }
 
-            this.card.pos = this.toGlobal(board_pos);
-            this.board[board_pos.x][board_pos.y] = this.card;
-            this.card = null;
+            mouse.cursor.pos = this.toGlobal(board_pos);
+            mouse.cursor.z = -10;
+            this.board[board_pos.x][board_pos.y] = mouse.cursor;
+            mouse.cursor = null;
         }
     }
 
-    clicked(mouse_pos) {
+    prepare_clicked(mouse_pos) {
         if (!mouse.cursor) {
             return;
         }
