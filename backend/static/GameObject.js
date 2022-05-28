@@ -74,6 +74,7 @@ class Card extends BaseGameObject {
         this.z = -10;
         this.movable = false;
         this.board_pos = null;
+        this.name = 'card';
     }
 
     mousePosToBoard(pos) {
@@ -131,6 +132,7 @@ export class Virus extends Card {
         super();
         this.fillStyle = '#f4f';
         this.movable = true;
+        this.name = 'virus';
     }
 }
 
@@ -140,6 +142,7 @@ export class Link extends Card {
         super();
         this.fillStyle = '#44f';
         this.movable = true;
+        this.name = 'link';
     }
 }
 

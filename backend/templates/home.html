@@ -13,23 +13,21 @@
         <script type="text/javascript">
          console.log(window.location.host);
          let socket = new WebSocket('ws://localhost:8000/game/');
-         socket.onmessage = function (e) {
-             console.log(e.data);
-         };
 
          socket.onclose = function(e) {
-             console.error('Chat socket closed unexpectedly');
+             console.error('socket closed unexpectedly');
          };
 
          socket.onopen = function(e) {
-             socket.send(JSON.stringify({test: 'test'}));
          };
         </script>
     {% endif %}
     <script type="module">
      import Game from '{% static "main.js" %}'
      document.addEventListener('DOMContentLoaded', (event) => {
-         Game.start();
+         let game = new Game();
+         game.bindSocket(socket);
+         game.start();
      });
     </script>
 {% endblock %}

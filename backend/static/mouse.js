@@ -23,7 +23,7 @@ class Mouse extends BaseGameObject {
         });
         Events.handlers('mouse.setcard').set('set_card', function (card) {
             self.setCursor(card);
-            this.cursor.z = -1;
+            self.cursor.z = -1;
             self.cursor.visible = false;
         });
         Events.handlers('game.start').set('mouse_before_start', function () {

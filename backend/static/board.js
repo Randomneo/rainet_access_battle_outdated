@@ -17,6 +17,7 @@ import { mouse } from './mouse.js';
 export class Board extends BaseGameObject {
     constructor(pos, size) {
         super();
+
         let self = this;
         this.pos = pos;
         this.lineWidth = 1;
@@ -87,25 +88,27 @@ export class Board extends BaseGameObject {
                     || !this.board[board_pos.x][board_pos.y].movable
             )
                 return;
-            mouse.setCursor(this.board[board_pos.x][board_pos.y]);
+            mouse.setCursor(this.board[board_pos.x][board_pos.y].copy());
             mouse.cursor.z = 1;
             mouse.cursor.selectToMove(board_pos);
-            this.board[mouse.cursor.board_pos.x][mouse.cursor.board_pos.y] = null;
+            this.board[mouse.cursor.board_pos.x][mouse.cursor.board_pos.y].visible = false;
         } else {
             if (!mouse.cursor.validMove(board_pos)) {
                 return;
             }
-            if (this.board[board_pos.x][board_pos.y]) {
+            if (this.board[board_pos.x][board_pos.y] && !board_pos.eq(mouse.cursor.board_pos)) {
                 console.log('owerlapping skip');
                 return;
             }
             if (!board_pos.eq(mouse.cursor.board_pos)) {
                 console.log('player moved');
             }
-
+            this.vset(mouse.cursor.board_pos, null);
             mouse.cursor.pos = this.toGlobal(board_pos);
             mouse.cursor.z = -10;
             this.board[board_pos.x][board_pos.y] = mouse.cursor;
+
+            Events.trigger('game.send_move', {from: mouse.cursor.board_pos, to: board_pos});
             mouse.cursor = null;
         }
     }
@@ -132,6 +135,15 @@ export class Board extends BaseGameObject {
 
     child_draw() {
         return this.cards();
+    }
+
+    vget(vec) {
+        // get by vector 2
+        return this.board[vec.x][vec.y];
+    }
+    vset(vec, val) {
+        // set by vector 2
+        this.board[vec.x][vec.y] = val;
     }
 
     draw(context) {

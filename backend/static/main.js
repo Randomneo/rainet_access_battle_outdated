@@ -12,6 +12,7 @@ import {
     EnemyExit,
 } from './GameObject.js';
 import { mouse } from './mouse.js';
+import { GameOrchestrator } from './gameorchestrator.js';
 
 
 let startButtons = {
@@ -45,21 +46,16 @@ class Game {
         // load level
         this.planStage();
         let board = new Board(new Vec2(20, 150), this.mapSize.copy());
+        this.gameorchestrator = new GameOrchestrator(board);
+
         Scene.gameObjects.push(board);
         Scene.gameObjects.push(mouse);
-        Events.handlers('game.start').set('start', function () { self.gameStage(); });
+    }
 
-        this.canvas.onmousemove = function (event) {
-            Events.trigger('canvas.mousemove', {'this': this, 'event': event});
-        };
-        this.canvas.onmouseout = function (event) {
-            Events.trigger('canvas.mouseout', {'this': this, 'event': event});
-        };
-        this.canvas.onclick = function (event) {
-            Events.trigger('canvas.click', {'this': this, 'event': event});
-        };
-
-        setInterval(function () { self.draw(); }, 10);
+    bindSocket(socket) {
+        if (socket.readyState !== 1)
+            console.log('wrong socket status!');
+        this.gameorchestrator.bindSocket(socket);
     }
 
     loadStartButtons() {
@@ -99,8 +95,21 @@ class Game {
         Scene.draw(this.context);
     }
 
-    static start() {
-        let game = new this();
+    start() {
+        let self = this;
+        Events.handlers('game.start').set('start', function () { self.gameStage(); });
+
+        this.canvas.onmousemove = function (event) {
+            Events.trigger('canvas.mousemove', {'this': this, 'event': event});
+        };
+        this.canvas.onmouseout = function (event) {
+            Events.trigger('canvas.mouseout', {'this': this, 'event': event});
+        };
+        this.canvas.onclick = function (event) {
+            Events.trigger('canvas.click', {'this': this, 'event': event});
+        };
+
+        setInterval(function () { self.draw(); }, 10);
     }
 }
 

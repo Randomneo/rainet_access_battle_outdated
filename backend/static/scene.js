@@ -12,7 +12,7 @@ export class Scene {
                 .filter(x => x)
         );
         to_draw = to_draw.filter(x => x.visible);
-        to_draw.sort(x => x.z);
+        to_draw.sort((a, b) => a.z - b.z);
         to_draw.forEach(function(gameObject) {
             gameObject.draw(context);
         });
