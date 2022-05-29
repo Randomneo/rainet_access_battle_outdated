@@ -1,0 +1,69 @@
+* board repr
+[
+VVVEELLL
+...VL...
+........
+]
+board[y][x] => this will represent human understandable chords
+
+* ---------------
+When operation with player move should be considired
+that each player will have own start at bottom of the board
+and enemy for that player will start from top
+
+so on backend frontend data should be transposed corespondently to player
+
+let's default aproach be `player1` will be at the top and `player2` - bottom
+(so transposition will be applied for player1)
+
+* set layout
+after player done with layout frontend will send
+
+# todo
+8 cards in format
+{
+  type: 'set_layout',
+  data: [
+    {type: 'card', pos: [x, y]},
+    ...
+    {type: 'card', pos: [x, y]},
+  ]
+}
+
+types: ['virus', 'link']
+
+in respond there will be
+{
+  type: 'action',
+  action: {
+    type: 'start game',
+  },
+}
+
+* move
+For now special action cards will be skiped
+
+frontend -> {
+  type: 'move',
+  data: {
+    'from': [x, y],
+    'to': [x, y],
+  }
+}
+
+# in future it could be type `special_move`
+
+backend -> {
+  type: 'move enemy',
+  data: {
+    'from': [x, y],
+    'to': [x, y],
+  }
+}
+
+backend -> {
+  type: 'reveal',
+  data: '<card type>
+}
+
+all `game stack` assumptions must be considered separately at frontend and bockend at the moment

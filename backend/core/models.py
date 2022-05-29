@@ -3,7 +3,6 @@ from random import choice
 from random import shuffle
 
 from django.contrib.auth import get_user_model
-from django.contrib.postgres.fields import JSONField
 from django.db import models
 
 User = get_user_model()
@@ -15,9 +14,9 @@ class Board(models.Model):
     player1 = models.ForeignKey(User, on_delete=models.DO_NOTHING, related_name='boards1', null=True)
     player2 = models.ForeignKey(User, on_delete=models.DO_NOTHING, related_name='boards2', null=False)
 
-    board = JSONField()
-    player1_stack = JSONField()
-    player2_stack = JSONField()
+    board = models.JSONField()
+    player1_stack = models.JSONField(default=list)
+    player2_stack = models.JSONField(default=list)
 
     is_player1_turn = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -62,6 +61,7 @@ class Board(models.Model):
             if self.board[x][y] not in ('virus', 'link', '_'):
                 continue
             moves.append((x, y))
+        # todo: handle no moves error
         move_to = choice(moves)
         move_from = (card['i'], card['j'])
         stack = self.move(move_from[0], move_from[1], move_to[0], move_to[1])

@@ -30,7 +30,7 @@ class GameConsumer(WebsocketConsumer):
             raise
 
         try:
-            self.send(json.dumps(GameOrchestrator.process_move(user, data)))
+            self.send(json.dumps(GameOrchestrator.process_move(self, data)))
         except GameOrchestratorError as e:
             self.send(json.dumps({'type': 'error', 'message': str(e)}))
             log.exception(e)

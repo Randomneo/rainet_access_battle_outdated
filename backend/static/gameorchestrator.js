@@ -39,6 +39,7 @@ export class GameOrchestrator {
         switch (action.type) {
         case 'start game': Events.trigger('game.start'); break;
         case 'move enemy': Events.trigger('board.move_enemy', action.data); break;
+        case 'reveal': Events.trigger('stack.add.user', action.data); break;
         }
     }
 

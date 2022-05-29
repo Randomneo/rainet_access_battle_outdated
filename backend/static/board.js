@@ -87,11 +87,11 @@ export class Board extends BaseGameObject {
         if (!mouse.cursor) {
             if (
                 this.enemy_turn
-                    || !this.board[board_pos.x][board_pos.y]
-                    || !this.board[board_pos.x][board_pos.y].movable
+                    || !this.vget(board_pos)
+                    || !this.vget(board_pos).movable
             )
                 return;
-            mouse.setCursor(this.board[board_pos.x][board_pos.y].copy());
+            mouse.setCursor(this.vget(board_pos).copy());
             mouse.cursor.z = 1;
             mouse.cursor.selectToMove(board_pos);
             this.board[mouse.cursor.board_pos.x][mouse.cursor.board_pos.y].visible = false;
@@ -99,20 +99,22 @@ export class Board extends BaseGameObject {
             if (!mouse.cursor.validMove(board_pos)) {
                 return;
             }
-            if (this.board[board_pos.x][board_pos.y] && !board_pos.eq(mouse.cursor.board_pos)) {
-                console.log('owerlapping skip');
+            if (this.vget(board_pos)
+                && !board_pos.eq(mouse.cursor.board_pos)
+                && !this.vget(board_pos).constructor == Enemy
+               ) {
                 return;
             }
             if (!board_pos.eq(mouse.cursor.board_pos)) {
                 console.log('player moved');
+                Events.trigger('game.send_move', {from: mouse.cursor.board_pos, to: board_pos});
+                this.enemy_turn = true;
             }
             this.vset(mouse.cursor.board_pos, null);
             mouse.cursor.pos = this.toGlobal(board_pos);
             mouse.cursor.z = -10;
             this.board[board_pos.x][board_pos.y] = mouse.cursor;
 
-            Events.trigger('game.send_move', {from: mouse.cursor.board_pos, to: board_pos});
-            this.enemy_turn = true;
             mouse.cursor = null;
         }
     }
@@ -121,9 +123,17 @@ export class Board extends BaseGameObject {
         console.log('Moving enemy');
         let from = new Vec2(data.from[0], data.from[1]);
         let to = new Vec2(data.to[0], data.to[1]);
-        this.vset(to, this.vget(from));
+        if (this.vget(to) && (this.vget(to).constructor == Virus || this.vget(to).constructor == Link)) {
+            Events.trigger('stack.add.enemy', this.vget(to).name);
+        }
+        if (this.vget(to) && this.vget(to).constructor == Exit) {
+            Events.trigger('stack.add.enemy', 'unknown');
+        } else {
+            // if not exit fill to pos with new card
+            this.vset(to, this.vget(from));
+            this.vget(to).pos = this.toGlobal(to);
+        }
         this.vset(from, null);
-        this.vget(to).pos = this.toGlobal(to);
         this.enemy_turn = false;
     }
 

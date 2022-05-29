@@ -128,9 +128,11 @@ class Card extends BaseGameObject {
 
 
 export class Virus extends Card {
+    static fillStyle = '#f4f';
+
     constructor() {
         super();
-        this.fillStyle = '#f4f';
+        this.fillStyle = Virus.fillStyle;
         this.movable = true;
         this.name = 'virus';
     }
@@ -138,19 +140,23 @@ export class Virus extends Card {
 
 
 export class Link extends Card {
+    static fillStyle = '#44f';
+
     constructor() {
         super();
-        this.fillStyle = '#44f';
+        this.fillStyle = Link.fillStyle;
         this.movable = true;
         this.name = 'link';
     }
 }
 
 export class Enemy extends Card {
+    static fillStyle = '#f44';
+
     constructor() {
         super();
+        this.fillStyle = Enemy.fillStyle;
         this.visible = true;
-        this.fillStyle = '#f44';
     }
 }
 

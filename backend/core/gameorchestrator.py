@@ -1,3 +1,4 @@
+import json
 from abc import ABC
 from abc import abstractmethod
 from logging import getLogger
@@ -20,8 +21,9 @@ class ActionError(GameOrchestratorError):
 class Action(ABC):
     type = None
 
-    def __init__(self, user):
-        self.user = user
+    def __init__(self, socket):
+        self.socket = socket
+        self.user = socket.scope['user']
 
     @staticmethod
     @abstractmethod
@@ -98,6 +100,15 @@ class MoveAction(Action):
             .first()
         # todo check move validity
 
+        if board.board[data['to']['y']][data['to']['x']].startswith('p1'):
+            # todo add proper way to deal with extra messages
+            self.socket.send(json.dumps({
+                'type': 'action',
+                'action': {
+                    'type': 'reveal',
+                    'data': board.board[data['to']['y']][data['to']['x']][2:],
+                },
+            }))
         board.move(data['from']['y'], data['from']['x'], data['to']['y'], data['to']['x'])
         board.save()
         response = board.ai_make_move()
@@ -114,7 +125,7 @@ actions = {action.type: action for action in Action.__subclasses__()}
 class GameOrchestrator:
 
     @staticmethod
-    def process_move(user, data):
+    def process_move(socket, data):
         if 'type' not in data:
             raise GameOrchestratorError(f'No type in provided data {data}')
         if data['type'] not in actions:
@@ -122,5 +133,5 @@ class GameOrchestrator:
 
         return {
             'type': 'action',
-            'action': actions[data['type']](user).act(data['data']),
+            'action': actions[data['type']](socket).act(data['data']),
         }

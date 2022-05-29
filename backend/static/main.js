@@ -13,6 +13,7 @@ import {
 } from './GameObject.js';
 import { mouse } from './mouse.js';
 import { GameOrchestrator } from './gameorchestrator.js';
+import { GameStack } from './gamestack.js';
 
 
 let startButtons = {
@@ -88,6 +89,8 @@ class Game {
 
     gameStage() {
         this.cleanPlanStage();
+        let gamestack = new GameStack();
+        Scene.gameObjects.push(gamestack);
     }
 
     draw() {
