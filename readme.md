@@ -14,6 +14,10 @@ or to run server in background mode
 
     docker-compose up -d
 
+After first up:
+
+    docker-compose python manage.py migrate
+
 # Usage
 
 api available at port `8000`
