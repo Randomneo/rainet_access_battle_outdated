@@ -17,6 +17,5 @@ def auth_client(client):
         email='admin@example.com',
         password='password',
     )
-    response = client.post('/api/token/', data={'username': 'test_auth_client', 'password': 'password'})
-    client.credentials(HTTP_AUTHORIZATION=f'Bearer {response.json()["access"]}')
+    client.login(username='test_auth_client', password='password')
     return client

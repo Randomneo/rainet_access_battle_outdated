@@ -13,12 +13,13 @@ export class GameOrchestrator {
         this.socket = null;
 
         Events.handlers('game.send_move').set('send_move', data => self.sendMove(data));
-        Events.handlers('board.start').set('send_layout', data => self.sendLayout(data));
+        Events.handlers('game.send_layout').set('send_layout', data => self.sendLayout(data));
     }
 
     bindSocket(socket) {
         this.socket = socket;
         this.socket.onmessage = this.catchSocket;
+        this.socket.gameorchestrator = this;
     }
 
     catchSocket(messageEvent) {
@@ -27,16 +28,18 @@ export class GameOrchestrator {
         switch (data.type) {
         case 'error': console.log(data.message); break;
             // todo redirect to some action on board
-        case 'action': console.log(data.action); break;
+        case 'action': this.gameorchestrator.actionHandler(data.action); break;
         default:
             console.log(`Unknown socket message type ${data.type}`);
             break;
         }
     }
 
-    moveEnemy(from, to) {
-        this.board.vset(to, this.board.vget(from));
-        this.board.vset(from, null);
+    actionHandler(action) {
+        switch (action.type) {
+        case 'start game': Events.trigger('game.start'); break;
+        case 'move enemy': Events.trigger('board.move_enemy', action.data); break;
+        }
     }
 
     sendMove(data) {

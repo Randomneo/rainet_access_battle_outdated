@@ -14,18 +14,9 @@ def test_login(client):
         email='admin@example.com',
         password=password,
     )
-    response = client.post('/api/token/', data={'username': login, 'password': password})
+    response = client.login(username=login, password=password)
 
-    assert response.status_code == 200, response.content
-    response = response.json()
-    assert 'access' in response
-    assert 'refresh' in response
-    token = response['access']
-
-    response = client.get('/api/profile/', HTTP_AUTHORIZATION='Bearer aoe')
-    assert response.status_code == 401, response.content
-
-    response = client.get('/api/profile/', HTTP_AUTHORIZATION=f'Bearer {token}')
+    response = client.get('/api/profile/')
     assert response.status_code == 200, response.content
 
 

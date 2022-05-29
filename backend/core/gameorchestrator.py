@@ -2,11 +2,26 @@ from abc import ABC
 from abc import abstractmethod
 from logging import getLogger
 
+from django.db.models import Q
+
+from .models import Board
+
 log = getLogger(__name__)
+
+
+class GameOrchestratorError(Exception):
+    ...
+
+
+class ActionError(GameOrchestratorError):
+    ...
 
 
 class Action(ABC):
     type = None
+
+    def __init__(self, user):
+        self.user = user
 
     @staticmethod
     @abstractmethod
@@ -17,43 +32,95 @@ class Action(ABC):
 class SetLayoutAction(Action):
     type = 'layout'
 
+    allowed_poses = (
+        (7, 0),
+        (7, 1),
+        (7, 2),
+        (6, 3),
+        (6, 4),
+        (7, 5),
+        (7, 6),
+        (7, 7),
+    )
+
     @staticmethod
-    def act(data):
-        log.error('set layout action')
-        log.error(data)
+    def validate_field(i, j, field):
+        is_virus = field.startswith('virus')
+        is_link = field.startswith('link')
+        if (is_virus or is_link) and (i, j) not in SetLayoutAction.allowed_poses:
+            raise ActionError('not valid virus/link pos')
+
+        if is_virus:
+            return 1, 0
+        if is_link:
+            return 0, 1
+        return 0, 0
+
+    @staticmethod
+    def validate_board(board):
+        viruses = 0
+        links = 0
+        for i, row in enumerate(board):
+            for j, item in enumerate(row):
+                virus, link = SetLayoutAction.validate_field(i, j, item)
+                viruses += virus
+                links += link
+        if not (viruses == 4 and links == 4):
+            raise ActionError('not valid cards count')
+
+    def act(self, data):
+
+        SetLayoutAction.validate_board(data)
+
+        board = Board.objects.create(
+            player2=self.user,
+            board=data,
+            is_player1_turn=False,
+        )
+        board.ai_set_layout()
+        board.save()
+
         return {
-            'type': 'action',
-            'action': 'set layout success',
+            'type': 'start game',
         }
 
 
 class MoveAction(Action):
     type = 'move'
 
-    @staticmethod
-    def act(data):
+    def act(self, data):
         log.error('move action')
         log.error(data)
+
+        board = Board.objects\
+            .filter(Q(player1=self.user) | Q(player2=self.user))\
+            .order_by('-created_at')\
+            .first()
+        # todo check move validity
+
+        board.move(data['from']['y'], data['from']['x'], data['to']['y'], data['to']['x'])
+        board.save()
+        response = board.ai_make_move()
+
         return {
-            'type': 'action',
-            'action': 'move enemy',
+            'type': 'move enemy',
+            'data': response,
         }
 
 
 actions = {action.type: action for action in Action.__subclasses__()}
 
 
-class GameOrchestratorError(Exception):
-    ...
-
-
 class GameOrchestrator:
 
     @staticmethod
-    def process_move(data):
+    def process_move(user, data):
         if 'type' not in data:
             raise GameOrchestratorError(f'No type in provided data {data}')
         if data['type'] not in actions:
             raise GameOrchestratorError('No action for provided type')
 
-        return actions[data['type']].act(data['data'])
+        return {
+            'type': 'action',
+            'action': actions[data['type']](user).act(data['data']),
+        }

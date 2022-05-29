@@ -37,6 +37,7 @@ export class Board extends BaseGameObject {
         Events.handlers('canvas.mousemove').set('mouse', function (data) {
             Events.trigger('board.mousemove', {board: self, mouse_pos: getMousePos(data.this, data.event)});
         });
+
         Events.handlers('board.check_start').set('check_start', function () {self.checkBeforeStart();});
         self.clicked = self.prepare_clicked;
 
@@ -63,12 +64,14 @@ export class Board extends BaseGameObject {
         Events.handlers('board.start').set('prepare_board', function () {
             self.clicked = self.in_game_clicked;
             self.enemy_turn = false;
+            Events.handlers('board.move_enemy').set('move_enemy', data => self.moveEnemy(data));
         });
     }
 
     checkBeforeStart() {
+
         if (this.viruses().length >= 4 && this.links().length >= 4) {
-            Events.trigger('game.start');
+            Events.trigger('game.send_layout', this);
         } else {
             console.log('can\'t start game');
         }
@@ -109,8 +112,19 @@ export class Board extends BaseGameObject {
             this.board[board_pos.x][board_pos.y] = mouse.cursor;
 
             Events.trigger('game.send_move', {from: mouse.cursor.board_pos, to: board_pos});
+            this.enemy_turn = true;
             mouse.cursor = null;
         }
+    }
+
+    moveEnemy(data) {
+        console.log('Moving enemy');
+        let from = new Vec2(data.from[0], data.from[1]);
+        let to = new Vec2(data.to[0], data.to[1]);
+        this.vset(to, this.vget(from));
+        this.vset(from, null);
+        this.vget(to).pos = this.toGlobal(to);
+        this.enemy_turn = false;
     }
 
     prepare_clicked(mouse_pos) {
