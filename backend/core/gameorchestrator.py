@@ -85,6 +85,7 @@ class SetLayoutAction(Action):
             is_player1_turn=False,
         )
         ai.random_layout(board)
+        board.save()
 
         return {
             'type': 'start game',
@@ -120,7 +121,7 @@ class MoveAction(Action):
             'type': 'action',
             'action': {
                 'type': 'endgame',
-                'data': 'you' if is_winner else 'enemy'
+                'data': 'enemy' if is_winner else 'you'
             }
         }))
 

@@ -33,9 +33,6 @@ class Board(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
-    def save(self, *args, **kwargs):
-        super().save(*args, **kwargs)
-
     def stack_user(self, user_stack, item):
         user_stack.append(item)
 
@@ -55,6 +52,7 @@ class Board(models.Model):
     def set_winner(self, is_p1):
         self.winner = self.player1 if is_p1 else self.player2
         self.loser = self.player2 if is_p1 else self.player1
+        self.status = self.FINISHED
 
     def check_stack_for_end_game(self, stack):
         viruses = 0
@@ -67,7 +65,7 @@ class Board(models.Model):
         if viruses > 3:
             return 'virus'
         if links > 3:
-            return 'links'
+            return 'link'
         return False
 
     def move(self, x1, y1, x2, y2):
