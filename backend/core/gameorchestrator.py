@@ -5,9 +5,14 @@ from logging import getLogger
 
 from django.db.models import Q
 
+from .ai import ai
 from .models import Board
 
 log = getLogger(__name__)
+
+
+class GameEnd(Exception):
+    ...
 
 
 class GameOrchestratorError(Exception):
@@ -79,8 +84,7 @@ class SetLayoutAction(Action):
             board=data,
             is_player1_turn=False,
         )
-        board.ai_set_layout()
-        board.save()
+        ai.random_layout(board)
 
         return {
             'type': 'start game',
@@ -90,16 +94,48 @@ class SetLayoutAction(Action):
 class MoveAction(Action):
     type = 'move'
 
+    def check_end_game(self, board):
+        p1_stack = board.check_stack_for_end_game(board.player1_stack)
+        p2_stack = board.check_stack_for_end_game(board.player2_stack)
+        p1_winner = False
+        p2_winner = False
+        if p1_stack == 'virus':
+            p2_winner = True
+        elif p1_stack == 'link':
+            p1_winner = True
+        elif p2_stack == 'virus':
+            p1_winner = True
+        elif p2_stack == 'link':
+            p2_winner = True
+
+        if p1_winner or p2_winner:
+            board.set_winner(p1_winner)
+            board.save()
+            self.notify_end_game(p1_winner)
+            return True
+        return False
+
+    def notify_end_game(self, is_winner):
+        self.socket.send(json.dumps({
+            'type': 'action',
+            'action': {
+                'type': 'endgame',
+                'data': 'you' if is_winner else 'enemy'
+            }
+        }))
+
+    def get_board(self):
+        return Board.objects\
+            .filter(Q(player1=self.user) | Q(player2=self.user))\
+            .order_by('-created_at')\
+            .first()
+
     def act(self, data):
         log.error('move action')
         log.error(data)
 
-        board = Board.objects\
-            .filter(Q(player1=self.user) | Q(player2=self.user))\
-            .order_by('-created_at')\
-            .first()
         # todo check move validity
-
+        board = self.get_board()
         if board.board[data['to']['y']][data['to']['x']].startswith('p1'):
             # todo add proper way to deal with extra messages
             self.socket.send(json.dumps({
@@ -111,7 +147,11 @@ class MoveAction(Action):
             }))
         board.move(data['from']['y'], data['from']['x'], data['to']['y'], data['to']['x'])
         board.save()
-        response = board.ai_make_move()
+        if self.check_end_game(board):
+            raise GameEnd()
+        response = ai.make_move(board)
+        if self.check_end_game(board):
+            raise GameEnd()
 
         return {
             'type': 'move enemy',

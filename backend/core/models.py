@@ -1,6 +1,4 @@
 from logging import getLogger
-from random import choice
-from random import shuffle
 
 from django.contrib.auth import get_user_model
 from django.db import models
@@ -10,78 +8,89 @@ log = getLogger(__name__)
 
 
 class Board(models.Model):
+    IN_PROGRESS = 1
+    FINISHED = 2
+    DROPPED = 10
+    STATES = (
+        (IN_PROGRESS, 'In Progress'),
+        (FINISHED, 'Finished'),
+        (DROPPED, 'Dropped'),
+    )
+
     # null = AI
     player1 = models.ForeignKey(User, on_delete=models.DO_NOTHING, related_name='boards1', null=True)
-    player2 = models.ForeignKey(User, on_delete=models.DO_NOTHING, related_name='boards2', null=False)
+    player2 = models.ForeignKey(User, on_delete=models.DO_NOTHING, related_name='boards2', null=True)
+    state = models.CharField(max_length=32, choices=STATES, default=IN_PROGRESS)
 
     board = models.JSONField()
     player1_stack = models.JSONField(default=list)
     player2_stack = models.JSONField(default=list)
 
     is_player1_turn = models.BooleanField(default=False)
+    is_player1_ai = models.BooleanField(default=True)
+    winner = models.ForeignKey(User, on_delete=models.DO_NOTHING, related_name='won_boards', null=True)
+    loser = models.ForeignKey(User, on_delete=models.DO_NOTHING, related_name='lost_boards', null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
-    # AI func
-    def ai_set_layout(self):
-        cards = [*['p1virus']*4, *['p1link']*4]
-        shuffle(cards)
-        poses = [
-            [0, 0],
-            [0, 1],
-            [0, 2],
-            [1, 3],
-            [1, 4],
-            [0, 5],
-            [0, 6],
-            [0, 7],
-        ]
-        for i, pos in enumerate(poses):
-            x, y = pos
-            self.board[x][y] = cards[i]
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
 
-    def ai_make_move(self):
-        cards = []
-        for i, row in enumerate(self.board):
-            for j, card in enumerate(row):
-                if card.startswith('p1'):
-                    cards.append({'i': i, 'j': j, 'card': card})
+    def stack_user(self, user_stack, item):
+        user_stack.append(item)
 
-        card = choice(cards)
-        possible_moves = [
-            (card['i']-1, card['j']),
-            (card['i'], card['j']-1),
-            (card['i']+1, card['j']),
-            (card['i'], card['j']+1),
-        ]
-        moves = []
-        for x, y in possible_moves:
-            if x < 0 or x > 7 or y < 0 or y > 7:
-                continue
-            if self.board[x][y] not in ('virus', 'link', '_'):
-                continue
-            moves.append((x, y))
-        # todo: handle no moves error
-        move_to = choice(moves)
-        move_from = (card['i'], card['j'])
-        stack = self.move(move_from[0], move_from[1], move_to[0], move_to[1])
+    def stack(self, card_from, card_to):
+        card = card_to
+        stack = self.player1_stack
+        if card.startswith('p1'):
+            stack = self.player2_stack
+            card = card[2:]
+
+        if card in ('virus', 'link'):
+            stack.append(card)
+        if card == 'exit':
+            stack.append(card_from[2:] if card_from.startswith('p1') else card_from)
         self.save()
-        self.debug_board()
-        return {
-            'from': (move_from[1], move_from[0]),
-            'to': (move_to[1], move_to[0]),
-            'stack': stack,
-        }
+
+    def set_winner(self, is_p1):
+        self.winner = self.player1 if is_p1 else self.player2
+        self.loser = self.player2 if is_p1 else self.player1
+
+    def check_stack_for_end_game(self, stack):
+        viruses = 0
+        links = 0
+        for card in stack:
+            if card == 'virus':
+                viruses += 1
+            if card == 'link':
+                links += 1
+        if viruses > 3:
+            return 'virus'
+        if links > 3:
+            return 'links'
+        return False
 
     def move(self, x1, y1, x2, y2):
         # 1 - from, 2 - to
+        self.stack(self.board[x1][y1], self.board[x2][y2])
         self.board[x2][y2] = self.board[x1][y1]
         self.board[x1][y1] = '_'
 
     def item_to_char(self, item):
         if item.startswith('p1'):
             return f'1{item[2:][0]}'
-        return f'2{item[0]}'
+        if item in ('virus', 'link'):
+            return f'2{item[0]}'
+        return f' {item[0]}'
+
+    def debug_stack(self):
+        log.error('user1 stack:')
+        for card in self.player1_stack:
+            log.error(card)
+
+        log.error('user2 stack:')
+        for card in self.player2_stack:
+            log.error(card)
 
     def debug_board(self):
         log.error('board')

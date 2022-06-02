@@ -3,6 +3,7 @@ from logging import getLogger
 
 from channels.generic.websocket import WebsocketConsumer
 
+from .gameorchestrator import GameEnd
 from .gameorchestrator import GameOrchestrator
 from .gameorchestrator import GameOrchestratorError
 
@@ -34,3 +35,5 @@ class GameConsumer(WebsocketConsumer):
         except GameOrchestratorError as e:
             self.send(json.dumps({'type': 'error', 'message': str(e)}))
             log.exception(e)
+        except GameEnd:
+            self.send(json.dumps({'type': 'close'}), close=True)

@@ -1,4 +1,5 @@
 FROM python:3.9
+ENV PYTHONUNBUFFERED=1
 
 COPY requirements.txt /opt/project/requirements.txt
 WORKDIR /opt/project

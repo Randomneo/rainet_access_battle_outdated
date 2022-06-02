@@ -54,9 +54,12 @@ class Game {
     }
 
     bindSocket(socket) {
-        if (socket.readyState !== 1)
+        if (socket.readyState !== 1) {
             console.log('wrong socket status!');
-        this.gameorchestrator.bindSocket(socket);
+            console.log(socket);
+        }
+        else
+            this.gameorchestrator.bindSocket(socket);
     }
 
     loadStartButtons() {

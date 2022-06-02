@@ -15,7 +15,12 @@
          let socket = new WebSocket('ws://localhost:8000/game/');
 
          socket.onclose = function(e) {
-             console.error('socket closed unexpectedly');
+             if (e.code === 1000) {
+                 console.log('closed socket')
+             } else {
+                 console.error('socket closed unexpectedly');
+                 console.log(e);
+             }
          };
 
          socket.onopen = function(e) {
