@@ -47,14 +47,13 @@ class AI:
             board.board[pos[0]][pos[1]] = card
 
     @ai_retry
-    async def make_move(self, board):
+    def make_move(self, board):
         cards = []
         for i, row in enumerate(board.board):
             for j, card in enumerate(row):
                 if card.startswith('p1'):
                     cards.append({'i': i, 'j': j, 'card': card})
 
-        print(board.board)
         card = choice(cards)
         possible_moves = [
             (card['i']-1, card['j']),
@@ -69,14 +68,13 @@ class AI:
             if board.board[x][y] not in ('virus', 'link', '_'):
                 continue
             moves.append((x, y))
-        # todo: handle no moves error
         try:
             move_to = choice(moves)
         except IndexError:
             raise AiRetry()
         move_from = (card['i'], card['j'])
-        await board.move(move_from[0], move_from[1], move_to[0], move_to[1])
-        await board.save()
+        board.move(move_from[0], move_from[1], move_to[0], move_to[1])
+        board.save()
         board.debug_board()
         board.debug_stack()
         return {
