@@ -61,3 +61,13 @@ def load_card(data: dict):
         return type_to_card(data['type']).deserialize(data)
     except KeyError:
         return None
+
+
+def apply_cards(func):
+    def mapper(cards):
+        return [*filter(None, map(func, cards))]
+    return mapper
+
+
+load_cards = apply_cards(load_card)
+save_cards = apply_cards(save_card)

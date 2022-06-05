@@ -81,33 +81,3 @@ class Board(models.Model):
         if links > 3:
             return 'link'
         return False
-
-    def move(self, x1, y1, x2, y2):
-        # 1 - from, 2 - to
-        self.stack(self.board[x1][y1], self.board[x2][y2])
-        self.board[x2][y2] = self.board[x1][y1]
-        self.board[x1][y1] = '_'
-
-    def item_to_char(self, item):
-        if item.startswith('p1'):
-            return f'1{item[2:][0]}'
-        if item in ('virus', 'link'):
-            return f'2{item[0]}'
-        return f' {item[0]}'
-
-    def debug_stack(self):
-        log.error('user1 stack:')
-        for card in self.player1_stack:
-            log.error(card)
-
-        log.error('user2 stack:')
-        for card in self.player2_stack:
-            log.error(card)
-
-    def debug_board(self):
-        log.error('board')
-        for row in self.board:
-            frow = ''
-            for item in row:
-                frow += f' {self.item_to_char(item)}'
-            log.error(frow)

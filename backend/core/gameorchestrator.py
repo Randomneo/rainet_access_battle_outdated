@@ -1,4 +1,3 @@
-import json
 from abc import ABC
 from abc import abstractmethod
 from logging import getLogger
@@ -119,13 +118,13 @@ class MoveAction(Action):
         return False
 
     def notify_end_game(self, is_winner):
-        self.socket.send(json.dumps({
+        self.socket.send({
             'type': 'action',
             'action': {
                 'type': 'endgame',
                 'data': 'enemy' if is_winner else 'you'
             }
-        }))
+        })
 
     def get_board(self):
         return Board.objects\
@@ -145,13 +144,13 @@ class MoveAction(Action):
         )
         if stack:
             # todo add proper way to deal with extra messages
-            self.socket.send(json.dumps({
+            self.socket.send({
                 'type': 'action',
                 'action': {
                     'type': 'reveal',
                     'data': stack.type,
                 },
-            }))
+            })
         if self.check_end_game(board):
             raise GameEnd()
 

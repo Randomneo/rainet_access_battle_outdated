@@ -1,10 +1,10 @@
-import json
 from logging import getLogger
 
 from .gameorchestrator import GameEnd
 from .gameorchestrator import GameOrchestrator
 from .gameorchestrator import GameOrchestratorError
 from .websocket import WebsocketConsumer
+from .websocket import WSClose
 
 
 class GameConsumer(WebsocketConsumer):
@@ -14,25 +14,19 @@ class GameConsumer(WebsocketConsumer):
     def disconnect(self, close_code):
         pass
 
-    def _receive(self, text_data):
+    def _receive(self, data):
         log = getLogger(__name__)
-        log.debug('Received %s', text_data)
+        log.debug('Received %s', data)
         user = self.scope['user']
         log.debug(user)
 
         if not user.is_authenticated:
-            self.close(code=3000)
-            return
+            raise WSClose()
 
         try:
-            data = json.loads(text_data)
-        except json.JSONDecodeError:
-            raise
-
-        try:
-            self.send(json.dumps(GameOrchestrator.process_move(self, data)))
+            self.send(GameOrchestrator.process_move(self, data))
         except GameOrchestratorError as e:
-            self.send(json.dumps({'type': 'error', 'message': str(e)}))
+            self.send({'type': 'error', 'message': str(e)})
             log.exception(e)
         except GameEnd:
-            self.send(json.dumps({'type': 'close'}), close=True)
+            self.send({'type': 'close'}, close=True)

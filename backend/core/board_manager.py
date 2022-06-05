@@ -3,7 +3,8 @@ from django.contrib.auth import get_user_model
 from .cards import Card
 from .cards import Pos
 from .cards import load_card
-from .cards import save_card
+from .cards import load_cards
+from .cards import save_cards
 
 User = get_user_model()
 
@@ -11,11 +12,14 @@ User = get_user_model()
 class BoardManager:
     def __init__(self, board):
         self.db_board = board
-        print(self.db_board.board)
-        self.board = [*filter(None, map(load_card, self.db_board.board))]
+        self.board = load_cards(self.db_board.board)
+        self.player1_stack = load_cards(self.db_board.player1_stack)
+        self.player2_stack = load_cards(self.db_board.player2_stack)
 
     def save(self):
-        self.db_board.board = [*map(save_card, self.board)]
+        self.db_board.board = save_cards(self.board)
+        self.db_board.player1_stack = save_cards(self.player1_stack)
+        self.db_board.player2_stack = save_cards(self.player2_stack)
         self.db_board.save()
 
     def get_by_pos(self, pos: Pos):
@@ -45,6 +49,7 @@ class BoardManager:
         return self.board
 
     def exit_layout(self):
+        '''Put on board exit cards for each player'''
         exits = {
             self.db_board.player1: [
                 [0, 3],
