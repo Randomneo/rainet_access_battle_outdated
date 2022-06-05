@@ -6,6 +6,7 @@ from logging import getLogger
 from django.db.models import Q
 
 from .ai import ai
+from .cards import Pos
 from .models import Board
 
 log = getLogger(__name__)
@@ -79,12 +80,13 @@ class SetLayoutAction(Action):
 
         SetLayoutAction.validate_board(data)
 
-        board = Board.objects.create(
+        board = Board.load(
+            player1=None,
             player2=self.user,
             board=data,
-            is_player1_turn=False,
         )
         ai.random_layout(board)
+        board.manager.exit_layout()
         board.save()
 
         return {
@@ -135,28 +137,38 @@ class MoveAction(Action):
         log.error('move action')
         log.error(data)
 
-        # todo check move validity
         board = self.get_board()
-        if board.board[data['to']['y']][data['to']['x']].startswith('p1'):
+        # todo check move validity
+        stack = board.manager.move(
+            Pos(data['from']['y'], data['from']['x']),
+            Pos(data['to']['y'], data['to']['x']),
+        )
+        if stack:
             # todo add proper way to deal with extra messages
             self.socket.send(json.dumps({
                 'type': 'action',
                 'action': {
                     'type': 'reveal',
-                    'data': board.board[data['to']['y']][data['to']['x']][2:],
+                    'data': stack.type,
                 },
             }))
-        board.move(data['from']['y'], data['from']['x'], data['to']['y'], data['to']['x'])
-        board.save()
-        if self.check_end_game(board):
-            raise GameEnd()
-        response = ai.make_move(board)
         if self.check_end_game(board):
             raise GameEnd()
 
+        pos_from, pos_to = ai.make_move(board)
+        stack = board.manager.move(pos_from, pos_to)
+
+        if self.check_end_game(board):
+            raise GameEnd()
+
+        board.manager.pprint()
+
         return {
             'type': 'move enemy',
-            'data': response,
+            'data': {
+                'from': [pos_from.y, pos_from.x],
+                'to': [pos_to.y, pos_to.x],
+            },
         }
 
 

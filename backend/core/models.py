@@ -3,6 +3,8 @@ from logging import getLogger
 from django.contrib.auth import get_user_model
 from django.db import models
 
+from .board_manager import BoardManager
+
 User = get_user_model()
 log = getLogger(__name__)
 
@@ -32,6 +34,18 @@ class Board(models.Model):
     loser = models.ForeignKey(User, on_delete=models.DO_NOTHING, related_name='lost_boards', null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.manager = BoardManager(self)
+
+    @classmethod
+    def load(cls, player1: User, player2: User, board: dict):
+        return cls.objects.create(
+            player1=player1,
+            player2=player2,
+            board=BoardManager.load(player1, player2, board),
+        )
 
     def stack_user(self, user_stack, item):
         user_stack.append(item)

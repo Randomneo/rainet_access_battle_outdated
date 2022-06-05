@@ -11,11 +11,15 @@ def client():
 
 
 @pytest.fixture()
-def auth_client(client):
-    User.objects.create_user(
+def user():
+    return User.objects.create_user(
         username='test_auth_client',
         email='admin@example.com',
         password='password',
     )
-    client.login(username='test_auth_client', password='password')
+
+
+@pytest.fixture()
+def auth_client(user, client):
+    client.login(username=user.username, password='password')
     return client

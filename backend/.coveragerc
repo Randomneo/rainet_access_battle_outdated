@@ -4,3 +4,12 @@ omit = tests/*
 show_missing = True
 skip_covered = True
 skip_empty = True
+exclude_lines =
+    def __repr__
+    def pprint
+    if self.debug:
+    if settings.DEBUG
+    raise AssertionError
+    raise NotImplementedError
+    if 0:
+    if __name__ == .__main__.:

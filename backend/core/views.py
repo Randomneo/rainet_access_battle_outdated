@@ -1,11 +1,10 @@
 import json
 from logging import getLogger
 
-from channels.generic.websocket import WebsocketConsumer
-
 from .gameorchestrator import GameEnd
 from .gameorchestrator import GameOrchestrator
 from .gameorchestrator import GameOrchestratorError
+from .websocket import WebsocketConsumer
 
 
 class GameConsumer(WebsocketConsumer):
@@ -15,7 +14,7 @@ class GameConsumer(WebsocketConsumer):
     def disconnect(self, close_code):
         pass
 
-    def receive(self, text_data):
+    def _receive(self, text_data):
         log = getLogger(__name__)
         log.debug('Received %s', text_data)
         user = self.scope['user']
