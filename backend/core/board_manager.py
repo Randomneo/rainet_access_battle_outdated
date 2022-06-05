@@ -1,12 +1,17 @@
+from logging import getLogger
+
 from django.contrib.auth import get_user_model
 
 from .cards import Card
+from .cards import Link
 from .cards import Pos
+from .cards import Virus
 from .cards import load_card
 from .cards import load_cards
 from .cards import save_cards
 
 User = get_user_model()
+log = getLogger(__name__)
 
 
 class BoardManager:
@@ -42,6 +47,48 @@ class BoardManager:
         self.board.append(card)
         self.save()
         return card
+
+    def user_stack(self, user):
+        try:
+            return {
+                self.db_board.player1: self.player1_stack,
+                self.db_board.player2: self.player2_stack,
+            }[user]
+        except KeyError:
+            log.error(f'user ({user}) not assigned to board')
+            raise
+
+    def add_stack(self, user, card):
+        self.user_stack(user).append(card)
+        self.save()
+
+    def is_user_winner(self, user):
+        stack = self.user_stack(user)
+        viruses = sum(filter(lambda card: isinstance(card, Virus), stack))
+        links = sum(filter(lambda card: isinstance(card, Link), stack))
+        if viruses >= 4:
+            return False
+        elif links >= 4:
+            return True
+        return None
+
+    def decide_winner(self):
+        is_player1_winner = self.is_user_winner(self.db_board.player1)
+        is_player2_winner = self.is_user_winner(self.db_board.player2)
+        if is_player1_winner is None and is_player2_winner is None:
+            return
+
+        if is_player1_winner:
+            winner = self.db_board.player1
+        else:
+            winner = self.db_board.player2
+        if is_player2_winner:
+            winner = self.db_board.player2
+        else:
+            winner = self.db_board.player1
+
+        self.db_board.set_winner(winner)
+        return winner
 
     def remove(self, card: Card):
         self.board = [*filter(lambda x: x != card, self.board)]

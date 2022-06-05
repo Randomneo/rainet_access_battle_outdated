@@ -50,34 +50,8 @@ class Board(models.Model):
     def stack_user(self, user_stack, item):
         user_stack.append(item)
 
-    def stack(self, card_from, card_to):
-        card = card_to
-        stack = self.player1_stack
-        if card.startswith('p1'):
-            stack = self.player2_stack
-            card = card[2:]
-
-        if card in ('virus', 'link'):
-            stack.append(card)
-        if card == 'exit':
-            stack.append(card_from[2:] if card_from.startswith('p1') else card_from)
-        self.save()
-
-    def set_winner(self, is_p1):
-        self.winner = self.player1 if is_p1 else self.player2
-        self.loser = self.player2 if is_p1 else self.player1
+    def set_winner(self, user):
+        self.winner = self.player1 if user == self.player1 else self.player2
+        self.loser = self.player2 if user == self.player1 else self.player1
         self.status = self.FINISHED
-
-    def check_stack_for_end_game(self, stack):
-        viruses = 0
-        links = 0
-        for card in stack:
-            if card == 'virus':
-                viruses += 1
-            if card == 'link':
-                links += 1
-        if viruses > 3:
-            return 'virus'
-        if links > 3:
-            return 'link'
-        return False
+        self.save()
