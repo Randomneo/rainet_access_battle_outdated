@@ -64,8 +64,8 @@ class BoardManager:
 
     def is_user_winner(self, user):
         stack = self.user_stack(user)
-        viruses = sum(filter(lambda card: isinstance(card, Virus), stack))
-        links = sum(filter(lambda card: isinstance(card, Link), stack))
+        viruses = sum(map(lambda card: isinstance(card, Virus), stack))
+        links = sum(map(lambda card: isinstance(card, Link), stack))
         if viruses >= 4:
             return False
         elif links >= 4:
@@ -78,13 +78,13 @@ class BoardManager:
         if is_player1_winner is None and is_player2_winner is None:
             return
 
-        if is_player1_winner:
+        if is_player1_winner is True:
             winner = self.db_board.player1
-        else:
+        elif is_player1_winner is False:
             winner = self.db_board.player2
-        if is_player2_winner:
+        if is_player2_winner is True:
             winner = self.db_board.player2
-        else:
+        elif is_player2_winner is False:
             winner = self.db_board.player1
 
         self.db_board.set_winner(winner)

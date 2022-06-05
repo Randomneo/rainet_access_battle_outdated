@@ -47,9 +47,6 @@ class Board(models.Model):
             board=BoardManager.load(player1, player2, board),
         )
 
-    def stack_user(self, user_stack, item):
-        user_stack.append(item)
-
     def set_winner(self, user):
         self.winner = self.player1 if user == self.player1 else self.player2
         self.loser = self.player2 if user == self.player1 else self.player1
