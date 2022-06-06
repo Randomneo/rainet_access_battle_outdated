@@ -12,6 +12,7 @@ def client():
 
 @pytest.fixture()
 def user():
+
     return User.objects.create_user(
         username='test_auth_client',
         email='admin@example.com',
