@@ -1,5 +1,8 @@
 [run]
-omit = tests/*
+omit =
+    tests/*
+    */migrations/*
+
 [report]
 show_missing = True
 skip_covered = True
@@ -7,6 +10,7 @@ skip_empty = True
 exclude_lines =
     def __repr__
     def pprint
+    @abstractmethod
     if self.debug:
     if settings.DEBUG
     raise AssertionError

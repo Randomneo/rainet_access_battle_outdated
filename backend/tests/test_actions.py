@@ -1,24 +1,24 @@
 import pytest
 
-from core.gameorchestrator import ActionError
-from core.gameorchestrator import SetLayoutAction
+from core.validators import ActionValidationError
+from core.validators import SetLayoutValidator
 
 
 @pytest.mark.parametrize('i,j,field,expected', [
     (7, 7, 'virus', (1, 0)),
-    (6, 7, 'virus', ActionError),
+    (6, 7, 'virus', ActionValidationError),
     (6, 4, 'virus', (1, 0)),
     (7, 7, 'link', (0, 1)),
-    (6, 7, 'link', ActionError),
+    (6, 7, 'link', ActionValidationError),
     (6, 4, 'link', (0, 1)),
     (1, 1, '_', (0, 0)),
 ])
 def test_validate_field(i, j, field, expected):
-    if expected == ActionError:
+    if expected == ActionValidationError:
         with pytest.raises(expected):
-            SetLayoutAction.validate_field(i, j, field)
+            SetLayoutValidator().validate_field(i, j, field)
     else:
-        assert expected == SetLayoutAction.validate_field(i, j, field)
+        assert expected == SetLayoutValidator().validate_field(i, j, field)
 
 
 @pytest.mark.parametrize('board,expected', [
@@ -41,7 +41,7 @@ def test_validate_field(i, j, field, expected):
         ['', '', '', '', '', '', '', ''],
         ['', '', '', 'virus', 'link', '', '', ''],
         ['virus', 'virus', '', '', '', 'link', 'link', 'link'],
-    ], ActionError),
+    ], ActionValidationError),
     ([
         ['', '', '', '', '', '', '', ''],
         ['', '', '', '', '', '', '', ''],
@@ -51,7 +51,7 @@ def test_validate_field(i, j, field, expected):
         ['', '', '', '', '', '', '', ''],
         ['', '', '', 'virus', 'link', '', '', ''],
         ['virus', 'virus', 'virus', '', '', '', 'link', 'link'],
-    ], ActionError),
+    ], ActionValidationError),
     ([
         ['', '', '', '', '', '', '', ''],
         ['', '', '', '', '', '', '', ''],
@@ -61,11 +61,11 @@ def test_validate_field(i, j, field, expected):
         ['', '', '', '', '', '', '', ''],
         ['', '', '', 'virus', 'link', '', '', ''],
         ['virus', 'virus', '', '', '', '', 'link', 'link'],
-    ], ActionError),
+    ], ActionValidationError),
 ])
 def test_validate_board(board, expected):
-    if expected == ActionError:
+    if expected == ActionValidationError:
         with pytest.raises(expected):
-            SetLayoutAction.validate_board(board)
+            SetLayoutValidator().validate(board)
     else:
-        SetLayoutAction.validate_board(board)
+        SetLayoutValidator().validate(board)

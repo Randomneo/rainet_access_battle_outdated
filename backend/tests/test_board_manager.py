@@ -2,6 +2,7 @@ import pytest
 from django.contrib.auth import get_user_model
 
 from core.board_manager import BoardManager
+from core.board_manager import NoWinner
 from core.cards import Link
 from core.cards import Pos
 from core.cards import Virus
@@ -129,4 +130,5 @@ def test_decide_winner(user, p1_stack, p2_stack, is_p1_winner):
     elif is_p1_winner is False:
         assert board.manager.decide_winner() == user2
     else:
-        assert board.manager.decide_winner() is None
+        with pytest.raises(NoWinner):
+            board.manager.decide_winner()

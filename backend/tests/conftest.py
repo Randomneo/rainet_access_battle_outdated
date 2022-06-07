@@ -20,6 +20,22 @@ def user():
 
 
 @pytest.fixture()
+def socket(user):
+    class Socket:
+        scope = {
+            'user': user,
+        }
+
+        def __init__(self):
+            self.sent = []
+
+        def send(self, data):
+            self.sent.append(data)
+
+    return Socket()
+
+
+@pytest.fixture()
 def auth_client(user, client):
     client.login(username=user.username, password='password')
     return client

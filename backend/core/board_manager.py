@@ -14,6 +14,10 @@ User = get_user_model()
 log = getLogger(__name__)
 
 
+class NoWinner(Exception):
+    ...
+
+
 class BoardManager:
     def __init__(self, board):
         self.db_board = board
@@ -76,7 +80,7 @@ class BoardManager:
         is_player1_winner = self.is_user_winner(self.db_board.player1)
         is_player2_winner = self.is_user_winner(self.db_board.player2)
         if is_player1_winner is None and is_player2_winner is None:
-            return
+            raise NoWinner()
 
         if is_player1_winner is True:
             winner = self.db_board.player1
