@@ -32,4 +32,4 @@ class WebsocketConsumer(ChannelsWSC):
             })
 
     def send(self, data, *args, **kwargs):
-        super().send(text_data=json.dups(data), *args, **kwargs)
+        super().send(text_data=json.dumps(data), *args, **kwargs)

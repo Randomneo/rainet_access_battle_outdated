@@ -1,6 +1,10 @@
 import pytest
+from asgiref.sync import sync_to_async
+from channels.testing import WebsocketCommunicator
 from django.contrib.auth import get_user_model
 from rest_framework.test import APIClient
+
+from rainet_access_battle.asgi import application
 
 User = get_user_model()
 
@@ -33,6 +37,21 @@ def socket(user):
             self.sent.append(data)
 
     return Socket()
+
+
+@pytest.fixture()
+async def ws(user):
+    comm = WebsocketCommunicator(application, '/game/')
+    print(user.id)
+    print(await sync_to_async(User.objects.create)(
+        username='test_auth_client',
+        email='admin@example.com',
+        password='password',
+    ))
+    comm.scope['user'] = user
+    connected, _ = await comm.connect()
+    assert connected
+    return comm
 
 
 @pytest.fixture()
