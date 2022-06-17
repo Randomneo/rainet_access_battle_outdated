@@ -1,8 +1,6 @@
 from dataclasses import dataclass
 
-from django.contrib.auth import get_user_model
-
-User = get_user_model()
+User = None
 
 
 @dataclass
@@ -20,7 +18,7 @@ class Card:
     def serialize(self):
         return {
             'type': self.type,
-            'owner': getattr(self.owner, 'id', None),
+            'owner': self.owner,
             'x': self.pos.x,
             'y': self.pos.y,
         }
@@ -28,7 +26,7 @@ class Card:
     @classmethod
     def deserialize(cls, data: dict):
         return cls(
-            User.objects.filter(id=data['owner']).first(),
+            data['owner'],
             Pos(x=data['x'], y=data['y'])
         )
 

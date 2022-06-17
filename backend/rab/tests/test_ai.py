@@ -1,8 +1,8 @@
-from core.ai import ai
-from core.cards import Link
-from core.cards import Pos
-from core.cards import Virus
-from core.models import Board
+from ..ai import ai
+from ..cards import Link
+from ..cards import Pos
+from ..cards import Virus
+from ..models import Board
 
 
 def test_ai_random_layout():
@@ -19,7 +19,7 @@ def test_ai_random_layout():
 
 def test_ai_make_move(user, monkeypatch):
     board = Board.load(user, None, [['virus', 'link']])
-    monkeypatch.setattr('core.ai.choice', lambda x: x[0])
+    monkeypatch.setattr('rab.ai.choice', lambda x: x[0])
     f, t = ai.make_move(board)
 
     assert Pos(0, 0) == f
@@ -28,5 +28,5 @@ def test_ai_make_move(user, monkeypatch):
 
 def test_ai_make_move_retry(user, monkeypatch):
     board = Board.load(user, None, [['virus', 'link'], ['virus']])
-    monkeypatch.setattr('core.ai.choice', lambda x: x[0])
+    monkeypatch.setattr('rab.ai.choice', lambda x: x[0])
     assert not ai.make_move(board)

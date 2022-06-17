@@ -1,7 +1,7 @@
 import pytest
 
-from core.validators import ActionValidationError
-from core.validators import SetLayoutValidator
+from ..validators import ActionValidationError
+from ..validators import SetLayoutValidator
 
 
 @pytest.mark.parametrize('i,j,field,expected', [

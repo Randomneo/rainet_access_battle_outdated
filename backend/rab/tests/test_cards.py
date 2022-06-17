@@ -1,9 +1,9 @@
 import pytest
 
-from core.cards import Card
-from core.cards import Pos
-from core.cards import load_card
-from core.cards import save_card
+from ..cards import Card
+from ..cards import Pos
+from ..cards import load_card
+from ..cards import save_card
 
 
 @pytest.mark.parametrize('_class', [*Card.__subclasses__()])
@@ -11,7 +11,7 @@ def test_card_class(user, _class):
     card = _class(user, Pos(1, 2))
     assert {
         'type': _class.__name__.lower(),
-        'owner': user.id,
+        'owner': user,
         'x': 1,
         'y': 2,
     } == card.serialize()
@@ -21,7 +21,7 @@ def test_card_class(user, _class):
 def test_load_card(user, _class):
     card = load_card({
         'type': _class.__name__.lower(),
-        'owner': user.id,
+        'owner': user,
         'x': 10,
         'y': 12,
     })
@@ -30,7 +30,7 @@ def test_load_card(user, _class):
     assert card.pos == Pos(10, 12)
     card = load_card({
         'type': None,
-        'owner': user.id,
+        'owner': user,
         'x': 10,
         'y': 12,
     })

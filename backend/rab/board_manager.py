@@ -1,7 +1,5 @@
 from logging import getLogger
 
-from django.contrib.auth import get_user_model
-
 from .cards import Card
 from .cards import Link
 from .cards import Pos
@@ -10,7 +8,6 @@ from .cards import load_card
 from .cards import load_cards
 from .cards import save_cards
 
-User = get_user_model()
 log = getLogger(__name__)
 
 
@@ -37,7 +34,9 @@ class BoardManager:
         except StopIteration:
             return None
 
-    def user_cards(self, user: User):
+    def user_cards(self, user):
+        for card in self.board:
+            print(card)
         return [*filter(lambda x: x.owner == user, self.board)]
 
     def move(self, pos_from: Pos, pos_to: Pos):
@@ -120,7 +119,7 @@ class BoardManager:
                     'y': pos[1],
                 }))
 
-    def user_can_move_here(self, user: User, pos: Pos):
+    def user_can_move_here(self, user, pos: Pos):
         return (
             (
                 not self.get_by_pos(pos)
@@ -131,7 +130,7 @@ class BoardManager:
         )
 
     @staticmethod
-    def load(player1: User, player2: User, board: dict):
+    def load(player1, player2, board: dict):
         resp = []
         for x, row in enumerate(board):
             for y, card in enumerate(row):
@@ -140,7 +139,7 @@ class BoardManager:
                 if card in map(lambda x: x.__name__.lower(), Card.__subclasses__()):
                     resp.append({
                         'type': card,
-                        'owner': getattr(owner, 'id', None),
+                        'owner': owner,
                         'x': x,
                         'y': y,
                     })
