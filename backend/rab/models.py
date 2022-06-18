@@ -1,6 +1,12 @@
+import enum
+
 from sqlalchemy import Column
+from sqlalchemy import Enum
+from sqlalchemy import ForeignKey
 from sqlalchemy import Integer
 from sqlalchemy import String
+from sqlalchemy.dialects.postgresql import JSON
+from sqlalchemy.orm import relationship
 
 from .board_manager import BoardManager
 from .database import Base
@@ -15,25 +21,38 @@ class User(Base):
     password = Column(String, nullable=False)
 
 
-class Board:
-    '''
-    board mock migration from django
-    '''
+class Board(Base):
+    __tablename__ = 'board'
 
-    IN_PROGRESS = 1
-    FINISHED = 2
-    DROPPED = 10
-    STATES = (
-        (IN_PROGRESS, 'In Progress'),
-        (FINISHED, 'Finished'),
-        (DROPPED, 'Dropped'),
+    class Statuses(enum.Enum):
+        in_progress = 1
+        finished = 2
+        dropped = 10
+
+    id = Column(Integer, primary_key=True)
+
+    player1_id = Column(Integer, ForeignKey(User.id, onupdate='CASCADE', ondelete='SET NULL'))
+    player2_id = Column(Integer, ForeignKey(User.id, onupdate='CASCADE', ondelete='SET NULL'))
+    winner_id = Column(Integer, ForeignKey(User.id, onupdate='CASCADE', ondelete='SET NULL'))
+    loser_id = Column(Integer, ForeignKey(User.id, onupdate='CASCADE', ondelete='SET NULL'))
+
+    board = Column(JSON)
+    player1_stack = Column(JSON, default=list, server_default='[]', nullable=False)
+    player2_stack = Column(JSON, default=list, server_default='[]', nullable=False)
+    status = Column(
+        Enum(Statuses),
+        default=Statuses.in_progress,
+        server_default=str(Statuses.in_progress.name),
+        nullable=False,
     )
 
+    player1 = relationship(User)
+    player2 = relationship(User)
+    winner = relationship(User)
+    loser = relationship(User)
+
     def __init__(self, *args, **kwargs):
-        for attr, value in kwargs.items():
-            setattr(self, attr, value)
-        self.player1_stack = []
-        self.player2_stack = []
+        super().__init__(*args, **kwargs)
         self.manager = BoardManager(self)
 
     @classmethod

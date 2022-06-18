@@ -6,7 +6,7 @@ from sqlalchemy import pool
 from alembic import context
 from rab.config import configer
 from rab.database import Base
-from rab.main import app  # noqa
+from rab.models import *  # noqa
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -41,7 +41,7 @@ def run_migrations_offline() -> None:
     script output.
 
     """
-    url = configer.get('DATABASE_URL')
+    url = configer.get('SYNC_DB_URL')
     context.configure(
         url=url,
         target_metadata=target_metadata,
@@ -67,7 +67,8 @@ def run_migrations_online() -> None:
 
     with engine.connect() as conn:
         context.configure(
-            connection=conn, target_metadata=target_metadata
+            connection=conn,
+            target_metadata=target_metadata,
         )
 
         with context.begin_transaction():

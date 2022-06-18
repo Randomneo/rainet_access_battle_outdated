@@ -3,7 +3,6 @@ from fastapi import FastAPI
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from .database import async_session
-from .models import *  # noqa
 
 app = FastAPI()
 
