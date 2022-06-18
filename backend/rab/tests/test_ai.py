@@ -5,8 +5,8 @@ from ..cards import Virus
 from ..models import Board
 
 
-def test_ai_random_layout():
-    board = Board.load(None, None, [[]])
+def test_ai_random_layout(user1, user2):
+    board = Board.load(user1, user2, [[]])
     ai.random_layout(board)
     assert len(board.manager.board) == 8
     assert len([*filter(lambda x: isinstance(x, Link), board.manager.board)]) == 4
@@ -17,16 +17,17 @@ def test_ai_random_layout():
     assert len([*filter(lambda x: isinstance(x, Virus), board.manager.board)]) == 8
 
 
-def test_ai_make_move(user, monkeypatch):
-    board = Board.load(user, None, [['virus', 'link']])
+def test_ai_make_move(user1, user2, monkeypatch):
+    board = Board.load(user1, user2, [['virus', 'link']])
     monkeypatch.setattr('rab.ai.choice', lambda x: x[0])
-    f, t = ai.make_move(board)
+    f, t = ai.make_move(user2, board)
 
     assert Pos(0, 0) == f
     assert Pos(1, 0) == t
 
 
-def test_ai_make_move_retry(user, monkeypatch):
-    board = Board.load(user, None, [['virus', 'link'], ['virus']])
+def test_ai_make_move_retry(user1, user2, monkeypatch):
+
+    board = Board.load(user1, user2, [['virus', 'link'], ['virus']])
     monkeypatch.setattr('rab.ai.choice', lambda x: x[0])
-    assert not ai.make_move(board)
+    assert not ai.make_move(user2, board)

@@ -55,8 +55,8 @@ class AI:
             }))
 
     @ai_retry
-    def make_move(self, board):
-        card = choice(board.manager.user_cards(None))
+    def make_move(self, ai_user, board):
+        card = choice(board.manager.user_cards(ai_user))
         possible_moves = [
             Pos(card.pos.x - 1, card.pos.y),
             Pos(card.pos.x, card.pos.y - 1),
@@ -65,7 +65,7 @@ class AI:
         ]
         moves = []
         for pos in possible_moves:
-            if board.manager.user_can_move_here(None, pos):
+            if board.manager.user_can_move_here(ai_user, pos):
                 moves.append(pos)
         try:
             move_to = choice(moves)

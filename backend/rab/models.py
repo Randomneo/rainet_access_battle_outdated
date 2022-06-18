@@ -46,10 +46,10 @@ class Board(Base):
         nullable=False,
     )
 
-    player1 = relationship(User)
-    player2 = relationship(User)
-    winner = relationship(User)
-    loser = relationship(User)
+    player1 = relationship(User, foreign_keys=[player1_id])
+    player2 = relationship(User, foreign_keys=[player2_id])
+    winner = relationship(User, foreign_keys=[winner_id])
+    loser = relationship(User, foreign_keys=[loser_id])
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -66,5 +66,4 @@ class Board(Base):
     def set_winner(self, user):
         self.winner = self.player1 if user == self.player1 else self.player2
         self.loser = self.player2 if user == self.player1 else self.player1
-        self.status = self.FINISHED
-        self.save()
+        self.status = self.Statuses.finished
