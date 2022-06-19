@@ -19,6 +19,8 @@ services:
     environment:
       <<: *db-envs
       DB_HOST: ${DB_HOST:-db}
+      # openssl rand -hex 32
+      SECRET_KEY: ${SECRET_KEY}
     depends_on:
       - db
 

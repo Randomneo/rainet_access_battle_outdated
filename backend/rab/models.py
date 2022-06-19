@@ -5,11 +5,13 @@ from sqlalchemy import Enum
 from sqlalchemy import ForeignKey
 from sqlalchemy import Integer
 from sqlalchemy import String
+from sqlalchemy import Text
 from sqlalchemy.dialects.postgresql import JSON
 from sqlalchemy.orm import relationship
 
 from .board_manager import BoardManager
 from .database import Base
+from .security import hash_password
 
 
 class User(Base):
@@ -18,7 +20,18 @@ class User(Base):
     id = Column(Integer, primary_key=True)
     username = Column(String, nullable=False)
     email = Column(String, nullable=False)
-    password = Column(String, nullable=False)
+    password = Column(Text, nullable=False)
+
+    def update_password(self, new_password):
+        self.password = hash_password(new_password)
+
+    @classmethod
+    def create(cls, *args, password, **kwargs):
+        return cls(
+            *args,
+            password=hash_password(password),
+            **kwargs,
+        )
 
 
 class Board(Base):

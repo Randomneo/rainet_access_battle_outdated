@@ -1,40 +1,50 @@
 {% extends "base.html" %}
 
-{% load bootstrap5 %}
-
 {% block content %}
 
     <div class="d-grid justify-content-center pt-5">
         <div class="row shadow-lg p-3 mb-5 bg-body rounded">
             <div class="col-12 text-center">
                 <h5>Login</h5>
+                {{ message }}
             </div>
-            {% if form.errors %}
-                <p>Your username and password didn't match. Please try again.</p>
-            {% endif %}
 
-            {% if next %}
-                {% if user.is_authenticated %}
-                    <p>Your account doesn't have access to this page. To proceed,
-                        please login with an account that has access.</p>
-                {% else %}
-                    <p>Please login to see this page.</p>
+            <form method="post" action="{{ url_for('post_login') }}">
+                {% if error %}
+                    <p class="text-danger">
+                        Username or password is incorrect
+                    </p>
                 {% endif %}
-            {% endif %}
 
-            <form method="post" action="{% url 'login' %}">
-                {% csrf_token %}
-                {% bootstrap_form form show_label=False %}
-                <input type="hidden" name="next" value="{{ next }}">
+                <div class="mb-3">
+                    <label for="username" class="form-label">Username</label>
+                    <input
+                        type="text"
+                        class="form-control"
+                        id="username"
+                        name="username"
+                        value="{{ username }}"
+                        {% if not username %} autofocus {% endif %}
+                    >
+                </div>
+
+                <div class="mb-3">
+                    <label for="password" class="form-label">Password</label>
+                    <input
+                        type="password"
+                        class="form-control"
+                        id="password"
+                        name="password"
+                        {% if username %} autofocus {% endif %}
+                    >
+                </div>
+
+                <input type="hidden" name="redirect_to" value="{{ redirect_to }}">
                 <div class="d-grid gap-2 col-10 mx-auto">
                     <input type="submit" value="Login" class="btn btn-primary">
-                    <a href="{% url 'password_reset' %}" class="btn btn-secondary">Lost password?</a>
+                    <a href="" class="btn btn-secondary">Lost password?</a>
                 </div>
             </form>
-        </div>
-
-        <div class="row">
-            {# Assumes you set up the password_reset view in your URLconf #}
         </div>
     </div>
 

@@ -87,7 +87,7 @@ async def override_get_session():
         async with test_async_session() as session:
             yield session
 
-db_session = pytest.fixture(override_get_session)
+db_session = pytest.fixture(override_get_session, scope='session')
 
 
 @pytest.fixture(scope='session')
@@ -120,31 +120,31 @@ async def prepare_db():
 
 
 @pytest.fixture()
-def client():
-    return TestClient()
+def client(db_session):
+    return TestClient(app)
 
 
-@pytest.fixture()
+@pytest.fixture(scope='session')
 async def user1(db_session):
-    user = User(
+    user = User.create(
         username='user1',
         email='user1@mail.com',
         password='password',
     )
     db_session.add(user)
-    await db_session.flush()
+    await db_session.commit()
     return user
 
 
-@pytest.fixture()
+@pytest.fixture(scope='session')
 async def user2(db_session):
-    user = User(
+    user = User.create(
         username='user2',
         email='user2@mail.com',
         password='password',
     )
     db_session.add(user)
-    await db_session.flush()
+    await db_session.commit()
     return user
 
 
