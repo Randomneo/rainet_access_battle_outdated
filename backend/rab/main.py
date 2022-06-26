@@ -5,6 +5,8 @@ from fastapi import Depends
 from fastapi import FastAPI
 from fastapi import Form
 from fastapi import Request
+from fastapi import WebSocket
+from fastapi import WebSocketDisconnect
 from fastapi.responses import HTMLResponse
 from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
@@ -20,12 +22,6 @@ from .security import check_password
 
 app = FastAPI()
 
-app.mount('/static', StaticFiles(directory='static'), name='static')
-app.add_middleware(SessionMiddleware, secret_key=configer.get('SECRET_KEY'))
-database = databases.Database(configer.get('DATABASE_URL'))
-
-templates = Jinja2Templates(directory='templates')
-
 
 class Redirect(Exception):
     def __init__(self, url):
@@ -35,6 +31,20 @@ class Redirect(Exception):
 async def get_session() -> AsyncSession:    # pragma: no cover
     async with async_session() as session:
         yield session
+
+
+async def get_user(request: Request = None, websocket: WebSocket = None, session=Depends(get_session)) -> User:
+    method = request or websocket
+    if not method or 'user_id' not in method.session:
+        return None
+    return (await session.execute(select(User).filter(User.id == method.session['user_id']))).scalar()
+
+
+app.mount('/static', StaticFiles(directory='static'), name='static')
+app.add_middleware(SessionMiddleware, secret_key=configer.get('SECRET_KEY'))
+database = databases.Database(configer.get('DATABASE_URL'))
+
+templates = Jinja2Templates(directory='templates')
 
 
 def templated(template_path):
@@ -61,14 +71,15 @@ async def redirect(request, exc):
 
 @app.get('/')
 async def root(session=Depends(get_session)):
-    return {}
+    raise Redirect(app.url_path_for('home'))
 
 
 @app.get('/home', response_class=HTMLResponse)
 @templated('home.html')
-async def home(request: Request):
+async def home(request: Request, user: User = Depends(get_user)):
+    print(user)
     return {
-        'user': None,
+        'user': user,
     }
 
 
@@ -97,6 +108,8 @@ async def post_login(
 ):
     redirect_to = redirect_to or app.url_path_for('home')
     user = (await session.execute(select(User).filter(User.username == username))).scalar()
+    print(username)
+    print(user)
     if user and check_password(password, user.password):
         request.session['user_id'] = user.id
         raise Redirect(redirect_to)
@@ -112,3 +125,19 @@ async def post_login(
 async def logout(request: Request):
     del request.session['user_id']
     raise Redirect(app.url_path_for('home'))
+
+
+@app.websocket('/game')
+async def game(websocket: WebSocket, user: User = Depends(get_user)):
+    await websocket.accept()
+    while True:
+        try:
+            data = await websocket.receive_json()
+        except WebSocketDisconnect:
+            await websocket.close()
+            break
+        await websocket.send_json({
+            'type': 'pingback',
+            'user': user.username,
+            'data': data,
+        })

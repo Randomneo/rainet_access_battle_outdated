@@ -28,6 +28,10 @@ def test_login_logout(user1, client):
     assert resp.status_code == 200
     assert user1.username == resp.json()
 
+    resp = client.get(app.url_path_for('home'))
+    assert resp.status_code == 200
+    assert user1.username in resp.content.decode('utf-8')
+
     resp = client.get(app.url_path_for('logout'))
     assert resp.status_code == 200
 

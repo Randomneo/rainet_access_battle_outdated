@@ -1,6 +1,9 @@
 {% extends "base.html" %}
 
 {% block content %}
+    {% if user %}
+    <p> hello {{ user.username }}</p>
+    {% endif %}
     <div class="home">
         <canvas id="gamecanvas" class="border d-block mx-auto">
         </canvas>
@@ -8,7 +11,7 @@
 {% endblock %}
 
 {% block extra_scripts %}
-    {% if user.is_authenticated %}
+    {% if user %}
         <script type="text/javascript">
          console.log(window.location.host);
          let socket = new WebSocket('ws://localhost:8000/game/');

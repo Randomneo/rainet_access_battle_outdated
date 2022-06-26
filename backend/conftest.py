@@ -149,5 +149,7 @@ async def user2(db_session):
 
 
 @pytest.fixture()
-def auth_client(user, client):
+def auth_client(user1, client):
+    resp = client.post(app.url_path_for('post_login'), {'username': user1.username, 'password': 'password'})
+    assert resp.status_code < 400
     return client

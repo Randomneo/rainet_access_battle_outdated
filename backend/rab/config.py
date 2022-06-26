@@ -50,6 +50,17 @@ def sync_db_url(*args):
     return database_url_builder(*args, sync=True)
 
 
+@key_builder(use=(
+    'POSTGRES_USER',
+    'POSTGRES_PASSWORD',
+    'DB_HOST',
+    'POSTGRES_PORT',
+    'POSTGRES_TEST_DB',
+))
+def sync_db_test_url(*args):
+    return database_url_builder(*args, sync=True)
+
+
 configer.required_keys = (
     'POSTGRES_DB',
     'POSTGRES_USER',
@@ -61,6 +72,7 @@ configer.built_keys['DATABASE_URL'] = database_url
 configer.built_keys['DATABASE_TEST_URL'] = database_test_url
 configer.built_keys['DATABASE_DEFAULT_URL'] = database_default_url
 configer.built_keys['SYNC_DB_URL'] = sync_db_url
+configer.built_keys['SYNC_DB_TEST_URL'] = sync_db_test_url
 
 
 DATABASE_URL = configer.get('DATABASE_URL')
