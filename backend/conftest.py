@@ -3,11 +3,11 @@ from contextlib import asynccontextmanager
 
 import pytest
 from asyncpg.exceptions import InvalidCatalogNameError
-from fastapi.testclient import TestClient
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.ext.asyncio import create_async_engine
 from sqlalchemy.orm import sessionmaker
+from starlette_async_wstc import TestClient
 
 from rab.config import configer
 from rab.database import Base
@@ -120,7 +120,7 @@ async def prepare_db():
 
 
 @pytest.fixture()
-def client(db_session):
+def client():
     return TestClient(app)
 
 
@@ -149,7 +149,14 @@ async def user2(db_session):
 
 
 @pytest.fixture()
-def auth_client(user1, client):
-    resp = client.post(app.url_path_for('post_login'), {'username': user1.username, 'password': 'password'})
-    assert resp.status_code < 400
-    return client
+def auth_client_with(client):
+    def get_client(user):
+        resp = client.post(app.url_path_for('post_login'), {'username': user.username, 'password': 'password'})
+        assert resp.status_code < 400
+        return client
+    return get_client
+
+
+@pytest.fixture()
+def auth_client(user1, auth_client_with):
+    return auth_client_with(user1)

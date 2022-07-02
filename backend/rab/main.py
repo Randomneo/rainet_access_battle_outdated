@@ -1,6 +1,5 @@
 from functools import wraps
 
-import databases
 from fastapi import Depends
 from fastapi import FastAPI
 from fastapi import Form
@@ -42,7 +41,6 @@ async def get_user(request: Request = None, websocket: WebSocket = None, session
 
 app.mount('/static', StaticFiles(directory='static'), name='static')
 app.add_middleware(SessionMiddleware, secret_key=configer.get('SECRET_KEY'))
-database = databases.Database(configer.get('DATABASE_URL'))
 
 templates = Jinja2Templates(directory='templates')
 
@@ -77,7 +75,6 @@ async def root(session=Depends(get_session)):
 @app.get('/home', response_class=HTMLResponse)
 @templated('home.html')
 async def home(request: Request, user: User = Depends(get_user)):
-    print(user)
     return {
         'user': user,
     }
@@ -108,8 +105,6 @@ async def post_login(
 ):
     redirect_to = redirect_to or app.url_path_for('home')
     user = (await session.execute(select(User).filter(User.username == username))).scalar()
-    print(username)
-    print(user)
     if user and check_password(password, user.password):
         request.session['user_id'] = user.id
         raise Redirect(redirect_to)
@@ -133,11 +128,10 @@ async def game(websocket: WebSocket, user: User = Depends(get_user)):
     while True:
         try:
             data = await websocket.receive_json()
-        except WebSocketDisconnect:
+        except WebSocketDisconnect:   # pragma: no cover
             await websocket.close()
             break
         await websocket.send_json({
             'type': 'pingback',
-            'user': user.username,
             'data': data,
         })
