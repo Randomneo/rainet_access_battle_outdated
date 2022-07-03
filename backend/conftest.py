@@ -13,6 +13,7 @@ from rab.config import configer
 from rab.database import Base
 from rab.main import app
 from rab.main import get_session
+from rab.matchmaker import Matchmaker
 from rab.models import User
 
 
@@ -47,6 +48,12 @@ async def drop_test_db():
             configer.get('DATABASE_DEFAULT_URL'),
             isolation_level='AUTOCOMMIT',
     ) as conn:
+        await conn.execute(
+            text(
+                'SELECT pg_terminate_backend(pid) from pg_stat_activity where datname = '
+                f"'{configer.get('POSTGRES_TEST_DB')}'"
+            )
+        )
         await conn.execute(text(f'drop database {configer.get("POSTGRES_TEST_DB")}'))
 
 
@@ -160,3 +167,8 @@ def auth_client_with(client):
 @pytest.fixture()
 def auth_client(user1, auth_client_with):
     return auth_client_with(user1)
+
+
+@pytest.fixture()
+def matchmaker():
+    return Matchmaker()
