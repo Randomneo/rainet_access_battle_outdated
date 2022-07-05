@@ -1,3 +1,4 @@
+import asyncio
 from functools import wraps
 
 from fastapi import Depends
@@ -16,10 +17,13 @@ from starlette.middleware.sessions import SessionMiddleware
 
 from .config import configer
 from .database import async_session
+from .matchmaker import matchmaker
+from .models import Board
 from .models import User
 from .security import check_password
 
 app = FastAPI()
+lock = asyncio.Lock()
 
 
 class Redirect(Exception):
@@ -32,11 +36,15 @@ async def get_session() -> AsyncSession:    # pragma: no cover
         yield session
 
 
+async def get_user_by_id(session, user_id):
+    return (await session.execute(select(User).filter(User.id == user_id))).scalar()
+
+
 async def get_user(request: Request = None, websocket: WebSocket = None, session=Depends(get_session)) -> User:
     method = request or websocket
     if not method or 'user_id' not in method.session:
         return None
-    return (await session.execute(select(User).filter(User.id == method.session['user_id']))).scalar()
+    return await get_user_by_id(session, method.session['user_id'])
 
 
 app.mount('/static', StaticFiles(directory='static'), name='static')
@@ -120,6 +128,36 @@ async def post_login(
 async def logout(request: Request):
     del request.session['user_id']
     raise Redirect(app.url_path_for('home'))
+
+
+@app.websocket('/game/search')
+async def search_game(
+        websocket: WebSocket,
+        user: User = Depends(get_user),
+        db_session: AsyncSession = Depends(get_session),
+):
+    await websocket.accept()
+    oponent = await matchmaker.search_oponent(user.id)
+
+    async def board_builder(player1_id, player2_id):
+        player1 = await get_user_by_id(db_session, player1_id)
+        player2 = await get_user_by_id(db_session, player2_id)
+        board = Board.load(player1, player2, [[]])
+        db_session.add(board)
+        await db_session.commit()
+        return board
+
+    async with lock:
+        board = await matchmaker.build_board(user.id, oponent, board_builder)
+
+    await websocket.send_json({
+        'type': 'game.found',
+        'data': {
+            'board_id': board.id,
+        }
+    })
+
+    await websocket.close()
 
 
 @app.websocket('/game')

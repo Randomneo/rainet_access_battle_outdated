@@ -3,6 +3,14 @@ import asyncio
 import pytest
 
 
+async def board_builder_mock(player1, player2):
+    class MockBoardBuilder:
+        def __init__(self, player1, player2):
+            self.player1 = player1
+            self.player2 = player2
+    return MockBoardBuilder(player1, player2)
+
+
 @pytest.mark.parametrize('user, users_queue, expected', [
     [
         'user1',
@@ -31,18 +39,18 @@ import pytest
     ],
 ])
 def test_get_oponent(user, users_queue, expected, matchmaker):
-    matchmaker.users_queue = users_queue
-    oponent = matchmaker.get_oponent(user)
+    matchmaker.mmqueue.queue = users_queue
+    oponent = matchmaker.mmqueue.get_oponent(user)
     assert oponent == expected
 
 
 async def test_matchmaker(matchmaker):
-    async def user_session(user, oponent, search_after=0):
-        await asyncio.sleep(search_after)
-        matchmaker.enter_queue(user)
+    boards = {}
 
-        found_oponent = await matchmaker.searcher(user)
+    async def user_session(user, oponent):
+        found_oponent = await matchmaker.search_oponent(user)
         assert found_oponent == oponent
+        boards[user] = await matchmaker.build_board(user, oponent, board_builder_mock)
 
     task1 = asyncio.create_task(user_session('user1', 'user2'))
     task2 = asyncio.create_task(user_session('user2', 'user1'))
@@ -50,4 +58,16 @@ async def test_matchmaker(matchmaker):
     await task1
     await task2
 
-    assert matchmaker.users_queue == []
+    assert matchmaker.mmqueue.queue == []
+    assert boards['user1'] == boards['user2']
+
+
+async def test_matchmaking_api(auth_client_with, user1, user2, monkeypatch, matchmaker):
+    monkeypatch.setattr('rab.main.lock', asyncio.Lock())
+    async with (
+            auth_client_with(user1).websocket_connect('/game/search') as client1,
+            auth_client_with(user2).websocket_connect('/game/search') as client2,
+    ):
+        resp1 = await client1.receive_json()
+        resp2 = await client2.receive_json()
+        assert resp1 == resp2

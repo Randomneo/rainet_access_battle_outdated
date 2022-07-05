@@ -70,6 +70,7 @@ class Board(Base):
 
     @classmethod
     def load(cls, player1, player2, board):
+        board = board or [[]]
         return cls(
             player1=player1,
             player2=player2,
