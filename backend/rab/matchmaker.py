@@ -1,25 +1,8 @@
-import threading
-from asyncio import events
+from asyncio.mixins import _LoopBoundMixin
 from collections import deque
 
-_global_lock = threading.Lock()
 
-
-class LoopBoundMixin:
-    _loop = None
-
-    def get_loop(self):
-        loop = events.get_running_loop()
-        if self._loop is None:
-            with _global_lock:
-                if self._loop is None:
-                    self._loop = loop
-        if loop is not self._loop:
-            raise RuntimeError(f'{self!r} is bound to a different event loop')
-        return loop
-
-
-class MMQueue(LoopBoundMixin):
+class MMQueue(_LoopBoundMixin):
     # todo: Add waiters autorestarer task
 
     def __init__(self):
@@ -49,7 +32,7 @@ class MMQueue(LoopBoundMixin):
         self.enter_queue(user_id)
         oponent = self.get_oponent(user_id)
         while not oponent:
-            waiter = self.get_loop().create_future()
+            waiter = self._get_loop().create_future()
             self.waiters.append(waiter)
             await waiter
             oponent = self.get_oponent(user_id)
