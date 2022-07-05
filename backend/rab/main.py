@@ -1,5 +1,7 @@
 import asyncio
 from functools import wraps
+from typing import AsyncIterator
+from typing import Awaitable
 
 from fastapi import Depends
 from fastapi import FastAPI
@@ -31,7 +33,7 @@ class Redirect(Exception):
         self.url = url
 
 
-async def get_session() -> AsyncSession:    # pragma: no cover
+async def get_session() -> AsyncIterator[AsyncSession]:    # pragma: no cover
     async with async_session() as session:
         yield session
 
@@ -40,7 +42,7 @@ async def get_user_by_id(session, user_id):
     return (await session.execute(select(User).filter(User.id == user_id))).scalar()
 
 
-async def get_user(request: Request = None, websocket: WebSocket = None, session=Depends(get_session)) -> User:
+async def get_user(request: Request = None, websocket: WebSocket = None, session=Depends(get_session)) -> User | None:
     method = request or websocket
     if not method or 'user_id' not in method.session:
         return None
@@ -136,16 +138,19 @@ async def search_game(
         user: User = Depends(get_user),
         db_session: AsyncSession = Depends(get_session),
 ):
-    await websocket.accept()
-    oponent = await matchmaker.search_oponent(user.id)
-
-    async def board_builder(player1_id, player2_id):
+    async def board_builder(player1_id: int, player2_id: int) -> Awaitable[Board]:
         player1 = await get_user_by_id(db_session, player1_id)
         player2 = await get_user_by_id(db_session, player2_id)
         board = Board.load(player1, player2, [[]])
         db_session.add(board)
         await db_session.commit()
         return board
+
+    await websocket.accept()
+    if not user:
+        await websocket.close()
+
+    oponent = await matchmaker.search_oponent(user.id)
 
     async with lock:
         board = await matchmaker.build_board(user.id, oponent, board_builder)

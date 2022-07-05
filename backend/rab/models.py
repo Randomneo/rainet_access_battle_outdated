@@ -59,10 +59,10 @@ class Board(Base):
         nullable=False,
     )
 
-    player1 = relationship(User, foreign_keys=[player1_id])
-    player2 = relationship(User, foreign_keys=[player2_id])
-    winner = relationship(User, foreign_keys=[winner_id])
-    loser = relationship(User, foreign_keys=[loser_id])
+    player1 = relationship(User, foreign_keys=[player1_id], collection_class=User)
+    player2 = relationship(User, foreign_keys=[player2_id], collection_class=User)
+    winner = relationship(User, foreign_keys=[winner_id], collection_class=User)
+    loser = relationship(User, foreign_keys=[loser_id], collection_class=User)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
