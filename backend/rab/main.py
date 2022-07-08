@@ -19,6 +19,7 @@ from starlette.middleware.sessions import SessionMiddleware
 
 from .config import configer
 from .database import async_session
+from .gameorchestrator import MatchesOrchestrator
 from .matchmaker import matchmaker
 from .models import Board
 from .models import User
@@ -165,16 +166,17 @@ async def search_game(
     await websocket.close()
 
 
-@app.websocket('/game')
-async def game(websocket: WebSocket, user: User = Depends(get_user)):
+@app.websocket('/game/{board_id}')
+async def game(
+        board_id: int,
+        websocket: WebSocket,
+        user: User = Depends(get_user),
+        db_session: AsyncSession = Depends(get_session),
+):
     await websocket.accept()
-    while True:
-        try:
-            data = await websocket.receive_json()
-        except WebSocketDisconnect:   # pragma: no cover
-            await websocket.close()
-            break
-        await websocket.send_json({
-            'type': 'pingback',
-            'data': data,
-        })
+    board = (await db_session.execute(select(Board).filter(Board.id == board_id))).scalar()
+    try:
+        await MatchesOrchestrator.enter(user, board, websocket)
+        await websocket.close()
+    except WebSocketDisconnect:
+        pass
