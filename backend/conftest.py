@@ -15,6 +15,7 @@ from rab.main import app
 from rab.main import get_session
 from rab.matchmaker import Matchmaker
 from rab.models import User
+from rab.security import hash_password
 
 
 @asynccontextmanager
@@ -132,26 +133,27 @@ def client():
 
 
 @pytest.fixture(scope='session')
-async def user1(db_session):
-    user = User.create(
+def default_password():
+    return hash_password('password')
+
+
+@pytest.fixture()
+async def user1(default_password):
+    user = User(
         username='user1',
         email='user1@mail.com',
-        password='password',
+        password=default_password,
     )
-    db_session.add(user)
-    await db_session.commit()
     return user
 
 
-@pytest.fixture(scope='session')
-async def user2(db_session):
-    user = User.create(
+@pytest.fixture()
+async def user2(default_password):
+    user = User(
         username='user2',
         email='user2@mail.com',
-        password='password',
+        password=default_password,
     )
-    db_session.add(user)
-    await db_session.commit()
     return user
 
 

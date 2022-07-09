@@ -62,12 +62,24 @@ async def test_matchmaker(matchmaker):
     assert boards['user1'] == boards['user2']
 
 
-async def test_matchmaking_api(auth_client_with, user1, user2, monkeypatch, matchmaker):
+async def test_matchmaking_api(
+        auth_client_with,
+        user1,
+        user2,
+        monkeypatch,
+        matchmaker,
+        db_session,
+):
     monkeypatch.setattr('rab.main.lock', asyncio.Lock())
+    db_session.add(user1)
+    db_session.add(user2)
+    await db_session.commit()
+
     async with (
             auth_client_with(user1).websocket_connect('/game/search') as client1,
             auth_client_with(user2).websocket_connect('/game/search') as client2,
     ):
+        ...
         resp1 = await client1.receive_json()
         resp2 = await client2.receive_json()
         assert resp1 == resp2

@@ -1,7 +1,9 @@
 from ..main import app
 
 
-def test_login_logout(user1, client):
+async def test_login_logout(user1, client, db_session):
+    db_session.add(user1)
+    await db_session.commit()
     login_url = app.url_path_for('post_login')
 
     resp = client.post(
