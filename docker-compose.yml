@@ -14,11 +14,13 @@ services:
       - "8000:${BE_INNER_UVICORN_PORT:-8080}"
     volumes:
       - ./backend:/opt/project
-    command: "python manage.py runserver 0.0.0.0:${BE_INNER_UVICORN_PORT:-8080}"
+    command: "uvicorn rab.main:app --host 0.0.0.0 --port ${BE_INNER_UVICORN_PORT:-8080} --reload"
     # command: "uwsgi --ini uwsgi.ini"
     environment:
       <<: *db-envs
       DB_HOST: ${DB_HOST:-db}
+      # openssl rand -hex 32
+      SECRET_KEY: ${SECRET_KEY}
     depends_on:
       - db
 

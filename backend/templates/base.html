@@ -1,28 +1,27 @@
-{% load bootstrap5 %}
-{% load static %}
 <html>
     <head>
-        {% bootstrap_css %}
-        {% bootstrap_javascript %}
-        <link rel="{% static 'style.css' %}">
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+        <link rel="{{ url_for('static', path='style.css') }}">
         {% block extra_css %}
         {% endblock %}
+
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
     </head>
     <body>
         <header class="">
             <ul class="nav col-12 col-md-auto mb-2">
                 <div class="me-auto">
                     <li>
-                        <a class="nav-link px2" href="{% url 'home' %}">RainetAccessBattle</a>
+                        <a class="nav-link px2" href="{{ url_for('home') }}">RainetAccessBattle</a>
                     </li>
                 </div>
-                {% if user.is_authenticated %}
+                {% if request.session.user_id %}
                     <li>
-                        <a class="nav-link px2" href="{% url 'logout' %}">Logout</a>
+                        <a class="nav-link px2" href="{{ url_for('logout') }}">Logout</a>
                     </li>
                 {% else %}
                     <li>
-                        <a class="nav-link px2" href="{% url 'login' %}">Login</a>
+                        <a class="nav-link px2" href="{{ url_for('get_login') }}">Login</a>
                     </li>
                     <li>
                         <a class="nav-link px2" href="">Sign-up (WIP)</a>
@@ -31,7 +30,6 @@
             </ul>
         </header>
         <main>
-            {% bootstrap_messages %}
             {% block content %}
             {% endblock %}
         </main>
