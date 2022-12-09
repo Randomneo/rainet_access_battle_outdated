@@ -30,6 +30,8 @@ services:
       <<: *db-envs
     volumes:
       - db_volume:/var/lib/postgresql/data
+    ports:
+      - 5432:5432
 
   adminer:
     image: adminer

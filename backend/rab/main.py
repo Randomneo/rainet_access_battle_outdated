@@ -1,27 +1,19 @@
 import asyncio
-from functools import wraps
 from typing import AsyncIterator
-from typing import Awaitable
 
 from fastapi import Depends
 from fastapi import FastAPI
 from fastapi import Form
 from fastapi import Request
 from fastapi import WebSocket
-from fastapi import WebSocketDisconnect
 from fastapi.responses import HTMLResponse
 from fastapi.responses import RedirectResponse
-from fastapi.staticfiles import StaticFiles
-from fastapi.templating import Jinja2Templates
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette.middleware.sessions import SessionMiddleware
 
 from .config import configer
 from .database import async_session
-from .gameorchestrator import MatchesOrchestrator
-from .matchmaker import matchmaker
-from .models import Board
 from .models import User
 from .security import check_password
 
@@ -50,27 +42,7 @@ async def get_user(request: Request = None, websocket: WebSocket = None, session
     return await get_user_by_id(session, method.session['user_id'])
 
 
-app.mount('/static', StaticFiles(directory='static'), name='static')
 app.add_middleware(SessionMiddleware, secret_key=configer.get('SECRET_KEY'))
-
-templates = Jinja2Templates(directory='templates')
-
-
-def templated(template_path):
-    def decorator(func):
-        @wraps(func)
-        async def wrapped(*args, **kwargs):
-            assert 'request' in kwargs
-            data = {
-                'request': kwargs['request']
-            }
-            data.update(await func(*args, **kwargs))
-            return templates.TemplateResponse(
-                template_path,
-                data,
-            )
-        return wrapped
-    return decorator
 
 
 @app.exception_handler(Redirect)
@@ -84,7 +56,6 @@ async def root(session=Depends(get_session)):
 
 
 @app.get('/home', response_class=HTMLResponse)
-@templated('home.html')
 async def home(request: Request, user: User = Depends(get_user)):
     return {
         'user': user,
@@ -92,7 +63,6 @@ async def home(request: Request, user: User = Depends(get_user)):
 
 
 @app.get('/login', response_class=HTMLResponse, name='get_login')
-@templated('registration/login.html')
 async def get_login(request: Request):
     return {}
 
@@ -106,7 +76,6 @@ async def status(request: Request, session=Depends(get_session)):
 
 
 @app.post('/login', response_class=HTMLResponse, name='post_login')
-@templated('registration/login.html')
 async def post_login(
         request: Request,
         username: str = Form(),
@@ -131,52 +100,3 @@ async def post_login(
 async def logout(request: Request):
     del request.session['user_id']
     raise Redirect(app.url_path_for('home'))
-
-
-@app.websocket('/game/search')
-async def search_game(
-        websocket: WebSocket,
-        user: User = Depends(get_user),
-        db_session: AsyncSession = Depends(get_session),
-):
-    async def board_builder(player1_id: int, player2_id: int) -> Awaitable[Board]:
-        player1 = await get_user_by_id(db_session, player1_id)
-        player2 = await get_user_by_id(db_session, player2_id)
-        board = Board.load(player1, player2, [[]])
-        db_session.add(board)
-        await db_session.commit()
-        return board
-
-    await websocket.accept()
-    if not user:
-        await websocket.close()
-
-    oponent = await matchmaker.search_oponent(user.id)
-
-    async with lock:
-        board = await matchmaker.build_board(user.id, oponent, board_builder)
-
-    await websocket.send_json({
-        'type': 'game.found',
-        'data': {
-            'board_id': board.id,
-        }
-    })
-
-    await websocket.close()
-
-
-@app.websocket('/game/{board_id}')
-async def game(
-        board_id: int,
-        websocket: WebSocket,
-        user: User = Depends(get_user),
-        db_session: AsyncSession = Depends(get_session),
-):
-    await websocket.accept()
-    board = (await db_session.execute(select(Board).filter(Board.id == board_id))).scalar()
-    try:
-        await MatchesOrchestrator.enter(user, board, websocket)
-        await websocket.close()
-    except WebSocketDisconnect:
-        pass

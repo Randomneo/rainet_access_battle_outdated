@@ -2,7 +2,9 @@ import asyncio
 from contextlib import asynccontextmanager
 
 import pytest
+import pytest_asyncio
 from asyncpg.exceptions import InvalidCatalogNameError
+from sqlalchemy import event
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.ext.asyncio import create_async_engine
@@ -88,14 +90,25 @@ async def init_models():
 
 async def override_get_session():
     async with get_engine() as engine:
-        test_async_session = sessionmaker(
-            engine, class_=AsyncSession, expire_on_commit=False,
-        )
+        async with engine.connect() as conn:
+            await conn.begin()
 
-        async with test_async_session() as session:
-            yield session
+            async with sessionmaker(
+                conn,
+                class_=AsyncSession,
+                expire_on_commit=False,
+            )() as session:
+                @event.listens_for(session.sync_session, 'after_transaction_end')
+                def end_savepoint(session, transaction):
+                    if conn.closed:
+                        return
+                    if not conn.in_nested_transaction():
+                        conn.sync_connection.begin_nested()
 
-db_session = pytest.fixture(override_get_session, scope='session')
+                yield session
+                await conn.rollback()
+
+db_session = pytest_asyncio.fixture(override_get_session, scope='session')
 
 
 @pytest.fixture(scope='session')
@@ -108,7 +121,7 @@ def event_loop():
     loop.close()
 
 
-@pytest.fixture(scope='session', autouse=True)
+@pytest_asyncio.fixture(scope='session', autouse=True)
 async def prepare_db():
     '''
     entery point fixture
@@ -137,7 +150,7 @@ def default_password():
     return hash_password('password')
 
 
-@pytest.fixture()
+@pytest_asyncio.fixture()
 async def user1(default_password):
     user = User(
         username='user1',
@@ -147,7 +160,7 @@ async def user1(default_password):
     return user
 
 
-@pytest.fixture()
+@pytest_asyncio.fixture()
 async def user2(default_password):
     user = User(
         username='user2',
